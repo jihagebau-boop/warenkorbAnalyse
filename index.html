@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Internes GA Dashboard</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #f5f7fa; margin: 0; }
+    .hidden { display: none !important; }
+    .box { max-width: 400px; margin: 8vh auto; background: #fff; padding: 2rem; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    input, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+    button { background: #0052cc; color: #fff; border: none; cursor: pointer; font-weight: 600; }
+    button:hover { background: #003d99; }
+    .error { color: #dc3545; font-size: 0.9rem; display: none; margin-top: 4px; }
+    #dashboard { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+    .card { background: #fff; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+    #output { background: #f8f9fa; padding: 1rem; border-radius: 6px; min-height: 80px; font-family: monospace; white-space: pre-wrap; }
+    .logout { background: #dc3545; width: auto; padding: 6px 12px; float: right; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <div id="login-view" class="box">
+    <h2>🔒 Interner Bereich</h2>
+    <input type="password" id="pw" placeholder="Passwort eingeben">
+    <button onclick="login()">Zugang prüfen</button>
+    <p id="err" class="error">Falsches Passwort</p>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard-view" class="hidden">
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;">
+      <h2 style="margin:0;">📊 GA Dashboard</h2>
+      <button class="logout" onclick="logout()">Abmelden</button>
+    </div>
+    <div class="card">
+      <label>Zeitraum:</label>
+      <input type="text" id="range" placeholder="z.B. last_7_days">
+      <button onclick="fetchData()">Daten laden</button>
+    </div>
+    <div class="card">
+      <h3>Ergebnis:</h3>
+      <div id="output">Klicken Sie auf „Daten laden".</div>
+    </div>
+  </div>
+
+  <script>
+    // ⚠️ HIER DEINE N8N WEBHOOK-URLS EINFÜGEN
+    const LOGIN_URL = 'https://DEINE-INSTANZ.n8n.cloud/webhook/login';
+    const DATA_URL  = 'https://DEINE-INSTANZ.n8n.cloud/webhook/data';
+
+    // Session prüfen
+    if (sessionStorage.getItem('ga_auth') === 'true') {
+      document.getElementById('login-view').classList.add('hidden');
+      document.getElementById('dashboard-view').classList.remove('hidden');
+    }
+
+    async function login() {
+      const pw = document.getElementById('pw').value;
+      const err = document.getElementById('err');
+      err.style.display = 'none';
+
+      const res = await fetch(LOGIN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pw })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        sessionStorage.setItem('ga_auth', 'true');
+        document.getElementById('login-view').classList.add('hidden');
+        document.getElementById('dashboard-view').classList.remove('hidden');
+      } else {
+        err.style.display = 'block';
+      }
+    }
+
+    function logout() {
+      sessionStorage.removeItem('ga_auth');
+      location.reload();
+    }
+
+    async function fetchData() {
+      if (sessionStorage.getItem('ga_auth') !== 'true') return logout();
+
+      const out = document.getElementById('output');
+      out.textContent = 'Lade...';
+      const range = document.getElementById('range').value || 'last_7_days';
+
+      const res = await fetch(DATA_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-auth': 'session-granted'
+        },
+        body: JSON.stringify({ dateRange: range })
+      });
+
+      if (res.status === 401) return logout();
+
+      const data = await res.json();
+      out.textContent = JSON.stringify(data, null, 2);
+    }
+
+    // Enter-Taste
+    document.getElementById('pw').addEventListener('keypress', e => { if(e.key==='Enter') login(); });
+    document.getElementById('range').addEventListener('keypress', e => { if(e.key==='Enter') fetchData(); });
+  </script>
+</body>
+</html>
