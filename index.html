@@ -7,7 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="../styles/theme.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
         /* KI-Auswertung Buttons nebeneinander */
         .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -224,6 +225,17 @@
     .pager-btn.active { background: var(--accent); color: #191919; font-weight: 600; }
     .sort-icon { font-size: 0.7em; opacity: 0.6; }
     th.sort-asc .sort-icon, th.sort-desc .sort-icon { opacity: 1; color: var(--accent); }
+
+    .ai-output h2, .ai-output h3 { margin-top: 1.2em; margin-bottom: 0.5em; font-weight: 600; color: #333; }
+    .ai-output table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.9em; background: #fff; }
+    .ai-output th, .ai-output td { border: 1px solid #e0e0e0; padding: 8px 10px; text-align: left; }
+    .ai-output th { background-color: #f7f7f7; font-weight: 600; color: #444; }
+      .ai-output { color: #222 !important; }
+    .ai-output tr:nth-child(even) { background-color: #fafafa; }
+    .ai-output ul, .ai-output ol { padding-left: 20px; margin: 10px 0; }
+    .ai-output p { margin: 0.5em 0; line-height: 1.5; }
+    .ai-output hr { border: 0; border-top: 1px solid #eee; margin: 1.5em 0; }
+
   </style>
 </head>
 <body>
@@ -305,21 +317,19 @@
                 <h2 class="section-title">KI-Auswertung <span class="ai-badge" id="aiBadge" style="display:none;">Azure GPT-4o</span></h2>
               </div>
               <div class="btn-group" style="margin-bottom:10px;">
-                <button class="btn" style="background:var(--accent,#2f8e63);color:#191919;display:inline-block;min-width:0;">Bundles &amp; Aktionsideen generieren</button>
-                <button class="btn btn-secondary" style="display:inline-block;min-width:0;">Zusammenfassung generieren</button>
+                <button class="btn" onclick="generateBundles()" id="bundleBtn" style="background:var(--accent,#2f8e63);color:#fff;display:inline-block;min-width:0;">
+                  🎁 Bundles & Aktionsideen generieren
+                </button>
               </div>
               <div class="ai-panels">
                 <div>
-                  <h3 class="ai-panel-title" style="font-size:0.82rem;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;margin:0 0 6px;">Teil A - Bundles &amp; Aktionsideen</h3>
-                  <div class="ai-output" id="aiOutputBundles" style="background:#f9faf9;border:1px solid #ececec;border-radius:2px;padding:14px;font-size:0.84rem;line-height:1.55;white-space:normal;display:block;margin-top:10px;min-height:38px;color:#888;">(Noch keine Auswertung)</div>
-                </div>
-                <div>
-                  <h3 class="ai-panel-title" style="font-size:0.82rem;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;margin:0 0 6px;">Teil B - Zusammenfassung</h3>
-                  <div class="summary-viz" id="summaryViz" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px;"></div>
-                  <div class="ai-output summary-output" id="aiOutputSummary" style="background:#fbfcfb;border:1px solid #ececec;border-radius:2px;padding:14px;font-size:0.84rem;line-height:1.55;white-space:normal;display:block;min-height:38px;color:#888;">(Noch keine Auswertung)</div>
+                  <h3 class="ai-panel-title" style="font-size:0.82rem;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;margin:0 0 6px;">KI-Empfehlungen</h3>
+                  <div class="ai-output" id="aiOutputBundles" style="background:#f9faf9;border:1px solid #ececec;border-radius:2px;padding:14px;font-size:0.84rem;line-height:1.55;white-space:normal;display:block;margin-top:10px;min-height:38px;">
+                    (Klicke auf "Analysieren", lade Daten, und generiere dann KI-Empfehlungen)
+                  </div>
                 </div>
               </div>
-            </section>
+</section>
 
             <!-- Erklärung -->
             <div class="surface-card" style="margin-bottom:0px; padding:1.2rem 1.2rem 1.2rem 1.2rem;">
@@ -374,374 +384,243 @@
   </div>
 
   <script>
-    const LOGIN_URL = 'https://hagebau.app.n8n.cloud/webhook/login';
-    const DATA_URL  = 'https://hagebau.app.n8n.cloud/webhook/data';
+  const LOGIN_URL = 'https://hagebau.app.n8n.cloud/webhook/login';
+  const DATA_URL  = 'https://hagebau.app.n8n.cloud/webhook/data';
+  const AI_BUNDLES_URL = 'https://hagebau.app.n8n.cloud/webhook/ai-bundles';
 
-    // Global state for sorting & pagination
-    window._comboSort = { category: {col:'orders',dir:'desc'}, product: {col:'orders',dir:'desc'} };
-    window._comboPage = { category: 0, product: 0 };
-    window._lastComboData = null;
+  // Global State
+  window._comboSort = { category: {col:'orders',dir:'desc'}, product: {col:'orders',dir:'desc'} };
+  window._comboPage = { category: 0, product: 0 };
+  window._lastComboData = null;
+  window._storedData = null; // ️ NEU: Speichert Daten für KI
 
-    // Auth check
-    if (sessionStorage.getItem('ga_auth') === 'true') {
-      document.getElementById('login-view').classList.add('hidden');
-      document.getElementById('dashboard-view').classList.remove('hidden');
-    }
-
-    async function login() {
-      const btn = document.getElementById('loginBtn');
-      const err = document.getElementById('err');
-      btn.disabled = true; err.classList.add('hidden');
-      try {
-        const res = await fetch(LOGIN_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: document.getElementById('pw').value })
-        });
-        const data = await res.json();
-        if (data.success) {
-          sessionStorage.setItem('ga_auth', 'true');
-          document.getElementById('login-view').classList.add('hidden');
-          document.getElementById('dashboard-view').classList.remove('hidden');
-        } else { err.classList.remove('hidden'); }
-      } catch { err.classList.remove('hidden'); }
-      finally { btn.disabled = false; }
-    }
-
-    function logout() {
-      sessionStorage.removeItem('ga_auth');
-      location.reload();
-    }
-
-    function showTab(tab) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-      event.currentTarget.classList.add('active');
-      document.getElementById(`tab-${tab}`).classList.add('active');
-    }
-
-    function toggleCustomDate() {
-      const customInputs = document.getElementById('customDateInputs');
-      customInputs.classList.remove('hidden');
-      // Standard: letzte 30 Tage vorausfüllen, falls leer
-      if (!document.getElementById('dateFrom').value || !document.getElementById('dateTo').value) {
-        const today = new Date();
-        const thirtyDaysAgo = new Date(today);
-        thirtyDaysAgo.setDate(today.getDate() - 30);
-        document.getElementById('dateTo').valueAsDate = today;
-        document.getElementById('dateFrom').valueAsDate = thirtyDaysAgo;
-      }
-      updateDateRangeDisplay();
-    }
-
-    function buildDateRange() {
-      const select = document.getElementById('dateRange');
-      if (select.value === 'custom') {
-        const from = document.getElementById('dateFrom').value;
-        const to = document.getElementById('dateTo').value;
-        if (!from || !to) {
-          alert('Bitte beide Daten auswählen.');
-          return null;
-        }
-        const today = new Date().toISOString().split('T')[0];
-        if (to > today) {
-          alert('Enddatum darf nicht in der Zukunft liegen.');
-          return null;
-        }
-        const fromFormatted = from.replace(/-/g, '');
-        const toFormatted = to.replace(/-/g, '');
-        return `${fromFormatted}:${toFormatted}`;
-      }
-      return select.value;
-    }
-
-    function updateDateRangeDisplay() {
-      const sel = document.getElementById('dateRange');
-      if (!sel) return;
-      const map = {
-        last7days: 'Letzte 7 Tage',
-        last30days: 'Letzte 30 Tage',
-        last90days: 'Letzte 90 Tage',
-        currentMonth: 'Aktueller Monat',
-        previousMonth: 'Vormonat'
-      };
-      const val = sel.value;
-      document.getElementById('dateRangeDisplay').textContent = map[val] || '';
-    }
-
-    function renderSummary(metrics) {
-      if (!metrics) return '<p class="no-data">Keine Kennzahlen verfügbar.</p>';
-      return `
-        <div class="metrics-grid">
-          <div class="metric-card"><strong>${metrics.total_orders}</strong><small>Bestellungen gesamt</small></div>
-          <div class="metric-card"><strong>${metrics.orders_with_category_combinations}</strong><small>Mit Kombi</small></div>
-          <div class="metric-card"><strong>${metrics.percent_orders_with_combinations}</strong><small>Anteil Kombi</small></div>
-          <div class="metric-card"><strong>${metrics.avg_revenue_per_order} €</strong><small>Ø Revenue</small></div>
-          <div class="metric-card"><strong>${metrics.avg_revenue_with_combinations} €</strong><small>Ø Revenue (Kombi)</small></div>
-          <div class="metric-card"><strong>${metrics.avg_categories_per_combination_order}</strong><small>Ø Kategorien</small></div>
-        </div>
-        <p style="color:#6b778c;font-size:0.9rem;margin-top:1rem;">
-          💡 <strong>Tipp:</strong> Lift &gt;1.5 (🟢) = starkes Bundle-Potenzial | Lift 1.2–1.5 (🟡) = Cross-Selling-Chance
-        </p>
-      `;
-    }
-
-    function renderComboTable(data, type) {
-      if (!data || data.length === 0) {
-        return '<p class="no-data">Keine Kombinationen mit Support ≥0.5% und Lift ≥1.0 gefunden.</p>';
-      }
-      const esc = str => String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      const columns = [
-        { key: 'combination', label: type === 'category' ? 'Kategorie-Kombination' : 'Produkt-Kombination', type: 'str' },
-        { key: 'orders', label: 'Best.', type: 'num' },
-        { key: 'revenue', label: 'Revenue', type: 'num' },
-        { key: 'support', label: 'Support', type: 'num' },
-        { key: 'confidence', label: 'Konf.', type: 'num' },
-        { key: 'lift', label: 'Lift', type: 'num' }
-      ];
-      const sortState = window._comboSort[type];
-
-      let html = '<table><thead><tr>';
-      columns.forEach(col => {
-        const isSorted = sortState.col === col.key;
-        const dir = isSorted ? sortState.dir : '';
-        html += `<th data-col="${col.key}" data-type="${col.type}" class="${isSorted ? 'sort-'+dir : ''}">${esc(col.label)} <span class="sort-icon">${isSorted ? (dir==='asc'?'▲':'▼') : '⇅'}</span></th>`;
-      });
-      html += '</tr></thead><tbody>';
-
-      const sorted = data.slice().sort((a,b) => {
-        const col = sortState.col;
-        const typ = columns.find(c=>c.key===col).type;
-        let va = a[col], vb = b[col];
-        if (typ==='num') { va = parseFloat(va)||0; vb = parseFloat(vb)||0; }
-        else { va = String(va).toLowerCase(); vb = String(vb).toLowerCase(); }
-        if (va < vb) return sortState.dir==='asc' ? -1 : 1;
-        if (va > vb) return sortState.dir==='asc' ? 1 : -1;
-        return 0;
-      });
-
-      const page = window._comboPage[type] || 0;
-      const pageSize = 25;
-      const total = sorted.length;
-      const pageCount = Math.ceil(total / pageSize);
-      const paged = sorted.slice(page * pageSize, (page + 1) * pageSize);
-
-      paged.forEach(row => {
-        const liftVal = parseFloat(row.lift);
-        const liftClass = liftVal >= 1.5 ? 'lift-high' : liftVal >= 1.2 ? 'lift-mid' : 'lift-low';
-        const liftIcon = liftVal > 1 ? '↑' : liftVal < 1 ? '↓' : '→';
-        html += `<tr>
-          <td class="combo-cell" title="${esc(row.combination)}">${esc(row.combination)}</td>
-          <td>${row.orders}</td>
-          <td>${parseFloat(row.revenue).toLocaleString('de-DE',{minimumFractionDigits:2})} €</td>
-          <td>${row.support}</td>
-          <td>${row.confidence}</td>
-          <td class="${liftClass}">${row.lift} ${liftIcon}</td>
-        </tr>`;
-      });
-      html += '</tbody></table>';
-
-      if (pageCount > 1) {
-        html += '<div class="pager">';
-        for (let i = 0; i < pageCount; ++i) {
-          html += `<button class="pager-btn${i===page?' active':''}" data-page="${i}">${i+1}</button>`;
-        }
-        html += '</div>';
-      }
-      return html;
-    }
-
-    function bindComboSort(type) {
-      const outId = type==='category' ? 'category-output' : 'product-output';
-      const el = document.getElementById(outId);
-      if (!el) return;
-      const ths = el.querySelectorAll('th[data-col]');
-      ths.forEach(th => {
-        th.onclick = function() {
-          const col = th.dataset.col;
-          const typ = th.dataset.type;
-          const state = window._comboSort[type];
-          if (state.col === col) {
-            state.dir = state.dir === 'asc' ? 'desc' : 'asc';
-          } else {
-            state.col = col;
-            state.dir = typ === 'str' ? 'asc' : 'desc';
-          }
-          const data = window._lastComboData && window._lastComboData[type];
-          if (data) {
-            document.getElementById(outId).innerHTML = renderComboTable(data, type);
-            bindComboSort(type);
-            bindComboPager(type, Math.ceil(data.length / 100));
-          }
-        };
-      });
-    }
-
-    function bindComboPager(type, pageCount) {
-      const outId = type==='category' ? 'category-output' : 'product-output';
-      const el = document.getElementById(outId);
-      if (!el) return;
-      const btns = el.querySelectorAll('.pager-btn');
-      btns.forEach(btn => {
-        btn.onclick = function() {
-          const page = parseInt(btn.dataset.page,10);
-          window._comboPage[type] = page;
-          const data = window._lastComboData && window._lastComboData[type];
-          if (data) {
-            document.getElementById(outId).innerHTML = renderComboTable(data, type);
-            bindComboSort(type);
-            bindComboPager(type, pageCount);
-          }
-        };
-      });
-    }
-
-    async function fetchData() {
-  // 1. Auth-Check
-  if (sessionStorage.getItem('ga_auth') !== 'true') {
-    logout();
-    return;
+  // Auth Check
+  if (sessionStorage.getItem('ga_auth') === 'true') {
+    document.getElementById('login-view').classList.add('hidden');
+    document.getElementById('dashboard-view').classList.remove('hidden');
   }
 
-  const btn = document.getElementById('fetchBtn');
-  const range = buildDateRange();
-  
-  // 2. Validierung des Datumsbereichs
-  if (!range) {
-    btn.disabled = false;
-    return;
-  }      
-  
-  // 3. UI in Ladezustand versetzen
-  btn.disabled = true;
-  document.getElementById('summary-output').innerHTML = '<p class="loading">🔄 Analysiere Daten...</p>';
-  document.getElementById('category-output').innerHTML = '';
-  document.getElementById('product-output').innerHTML = '';
-
-  try {
-    // 4. Webhook aufrufen
-    const res = await fetch(DATA_URL, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json', 
-        'x-auth': 'session-granted' 
-      },
-      body: JSON.stringify({ dateRange: range })
-    });
-
-    // 5. HTTP-Status prüfen
-    if (res.status === 401) {
-      logout();
-      return;
-    }
-    if (!res.ok) {
-      throw new Error(`Server-Antwort: ${res.status} ${res.statusText}`);
-    }
-
-    // 🔍 6. ROBUSTES PARSING: Erst als Text holen, dann JSON
-    const responseText = await res.text();
-    
-    // Debug-Logs für die Console (F12)
-    console.log('🔍 Response Status:', res.status);
-    console.log('🔍 Response Length:', responseText.length);
-    console.log('🔍 Response Preview (500 chars):', responseText.substring(0, 500));
-
-    // Prüfen auf leere Antwort
-    if (!responseText || responseText.trim() === '') {
-      throw new Error('⚠️ Webhook hat leere Antwort zurückgegeben – prüfe n8n Execution Log!');
-    }
-
-    // JSON parsen mit detailliertem Fehler-Handling
-    let rawResult;
+  async function login() {
+    const btn = document.getElementById('loginBtn');
+    const err = document.getElementById('err');
+    btn.disabled = true; err.classList.add('hidden');
     try {
-      rawResult = JSON.parse(responseText);
-    } catch (parseErr) {
-      console.error('❌ JSON Parse Error:', parseErr.message);
-      console.error('📄 Raw Response that failed:', responseText);
-      
-      // Hilfreiche Hinweise für häufige Probleme
-      if (responseText.includes('<!DOCTYPE html') || responseText.trim().startsWith('<')) {
-        throw new Error('⚠️ Webhook hat HTML statt JSON zurückgegeben (z.B. Fehlerseite).');
-      }
-      if (responseText.endsWith('{') || responseText.endsWith('[') || responseText.endsWith(',')) {
-        throw new Error('⚠️ JSON scheint abgeschnitten – prüfe Payload-Größe oder n8n Timeout.');
-      }
-      throw new Error(`❌ Ungültiges JSON: ${parseErr.message}`);
+      const res = await fetch(LOGIN_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: document.getElementById('pw').value }) });
+      const data = await res.json();
+      if (data.success) { sessionStorage.setItem('ga_auth', 'true'); document.getElementById('login-view').classList.add('hidden'); document.getElementById('dashboard-view').classList.remove('hidden'); } 
+      else { err.classList.remove('hidden'); }
+    } catch { err.classList.remove('hidden'); } finally { btn.disabled = false; }
+  }
+
+  function logout() { sessionStorage.removeItem('ga_auth'); location.reload(); }
+
+  function showTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    document.getElementById(`tab-${tab}`).classList.add('active');
+  }
+
+  function toggleCustomDate() {
+    document.getElementById('customDateInputs').classList.remove('hidden');
+    if (!document.getElementById('dateFrom').value || !document.getElementById('dateTo').value) {
+      const today = new Date();
+      const thirtyDaysAgo = new Date(today);
+      thirtyDaysAgo.setDate(today.getDate() - 30);
+      document.getElementById('dateTo').valueAsDate = today;
+      document.getElementById('dateFrom').valueAsDate = thirtyDaysAgo;
     }
-    
-    // 7. Datenstruktur normalisieren (n8n gibt manchmal Array mit .json zurück)
-    let data = null;
-    if (rawResult && typeof rawResult === 'object') {
-      if (rawResult.part1_key_metrics) {
-        // Direktes Objekt
-        data = rawResult;
-      } else if (Array.isArray(rawResult) && rawResult.length > 0) {
-        const firstItem = rawResult[0];
-        if (firstItem?.json?.part1_key_metrics) {
-          // n8n Standard: [{ json: { ... } }]
-          data = firstItem.json;
-        } else if (firstItem?.part1_key_metrics) {
-          // Flache Struktur im Array
-          data = firstItem;
+    updateDateRangeDisplay();
+  }
+
+  function buildDateRange() {
+    const from = document.getElementById('dateFrom').value;
+    const to = document.getElementById('dateTo').value;
+    if (!from || !to) { alert('Bitte beide Daten auswählen.'); return null; }
+    const today = new Date().toISOString().split('T')[0];
+    if (to > today) { alert('Enddatum darf nicht in der Zukunft liegen.'); return null; }
+    return `${from.replace(/-/g, '')}:${to.replace(/-/g, '')}`;
+  }
+
+  function updateDateRangeDisplay() {
+    const from = document.getElementById('dateFrom').value;
+    const to = document.getElementById('dateTo').value;
+    document.getElementById('dateRangeDisplay').textContent = (from && to) ? `${from} bis ${to}` : '';
+  }
+
+  function renderSummary(metrics) {
+    if (!metrics) return '<p class="no-data">Keine Kennzahlen verfügbar.</p>';
+    return `<div class="metrics-grid">
+      <div class="metric-card"><strong>${metrics.total_orders}</strong><small>Bestellungen gesamt</small></div>
+      <div class="metric-card"><strong>${metrics.orders_with_category_combinations}</strong><small>Mit Kombi</small></div>
+      <div class="metric-card"><strong>${metrics.percent_orders_with_combinations}</strong><small>Anteil Kombi</small></div>
+      <div class="metric-card"><strong>${metrics.avg_revenue_per_order} €</strong><small>Ø Revenue</small></div>
+      <div class="metric-card"><strong>${metrics.avg_revenue_with_combinations} €</strong><small>Ø Revenue (Kombi)</small></div>
+      <div class="metric-card"><strong>${metrics.avg_categories_per_combination_order}</strong><small>Ø Kategorien</small></div>
+    </div><p style="color:#6b778c;font-size:0.9rem;margin-top:1rem;">💡 <strong>Tipp:</strong> Lift &gt;1.5 (🟢) = starkes Bundle-Potenzial | Lift 1.2–1.5 (🟡) = Cross-Selling-Chance</p>`;
+  }
+
+  function renderComboTable(data, type) {
+    if (!data || data.length === 0) return '<p class="no-data">Keine Kombinationen mit Support ≥0.5% und Lift ≥1.0 gefunden.</p>';
+    const esc = str => String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const columns = [
+      { key: 'combination', label: type === 'category' ? 'Kategorie-Kombination' : 'Produkt-Kombination', type: 'str' },
+      { key: 'orders', label: 'Best.', type: 'num' },
+      { key: 'revenue', label: 'Revenue', type: 'num' },
+      { key: 'support', label: 'Support', type: 'num' },
+      { key: 'confidence', label: 'Konf.', type: 'num' },
+      { key: 'lift', label: 'Lift', type: 'num' }
+    ];
+    const sortState = window._comboSort[type];
+    let html = '<table><thead><tr>';
+    columns.forEach(col => {
+      const isSorted = sortState.col === col.key;
+      const dir = isSorted ? sortState.dir : '';
+      html += `<th data-col="${col.key}" data-type="${col.type}" class="${isSorted ? 'sort-'+dir : ''}">${esc(col.label)} <span class="sort-icon">${isSorted ? (dir==='asc'?'▲':'▼') : '⇅'}</span></th>`;
+    });
+    html += '</tr></thead><tbody>';
+    const sorted = data.slice().sort((a,b) => {
+      const col = sortState.col;
+      const typ = columns.find(c=>c.key===col).type;
+      let va = a[col], vb = b[col];
+      if (typ==='num') { va = parseFloat(va)||0; vb = parseFloat(vb)||0; }
+      else { va = String(va).toLowerCase(); vb = String(vb).toLowerCase(); }
+      if (va < vb) return sortState.dir==='asc' ? -1 : 1;
+      if (va > vb) return sortState.dir==='asc' ? 1 : -1;
+      return 0;
+    });
+    const page = window._comboPage[type] || 0;
+    const pageSize = 25;
+    const total = sorted.length;
+    const pageCount = Math.ceil(total / pageSize);
+    const paged = sorted.slice(page * pageSize, (page + 1) * pageSize);
+    paged.forEach(row => {
+      const liftVal = parseFloat(row.lift);
+      const liftClass = liftVal >= 1.5 ? 'lift-high' : liftVal >= 1.2 ? 'lift-mid' : 'lift-low';
+      const liftIcon = liftVal > 1 ? '↑' : liftVal < 1 ? '↓' : '→';
+      html += `<tr><td class="combo-cell" title="${esc(row.combination)}">${esc(row.combination)}</td><td>${row.orders}</td><td>${parseFloat(row.revenue).toLocaleString('de-DE',{minimumFractionDigits:2})} €</td><td>${row.support}</td><td>${row.confidence}</td><td class="${liftClass}">${row.lift} ${liftIcon}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    if (pageCount > 1) {
+      html += '<div class="pager">';
+      for (let i = 0; i < pageCount; ++i) html += `<button class="pager-btn${i===page?' active':''}" data-page="${i}">${i+1}</button>`;
+      html += '</div>';
+    }
+    return html;
+  }
+
+  function bindComboSort(type) {
+    const outId = type==='category' ? 'category-output' : 'product-output';
+    const el = document.getElementById(outId);
+    if (!el) return;
+    el.querySelectorAll('th[data-col]').forEach(th => {
+      th.onclick = function() {
+        const col = th.dataset.col;
+        const typ = th.dataset.type;
+        const state = window._comboSort[type];
+        if (state.col === col) state.dir = state.dir === 'asc' ? 'desc' : 'asc';
+        else { state.col = col; state.dir = typ === 'str' ? 'asc' : 'desc'; }
+        const data = window._lastComboData && window._lastComboData[type];
+        if (data) { document.getElementById(outId).innerHTML = renderComboTable(data, type); bindComboSort(type); bindComboPager(type, Math.ceil(data.length / 25)); }
+      };
+    });
+  }
+
+  function bindComboPager(type, pageCount) {
+    const outId = type==='category' ? 'category-output' : 'product-output';
+    const el = document.getElementById(outId);
+    if (!el) return;
+    el.querySelectorAll('.pager-btn').forEach(btn => {
+      btn.onclick = function() {
+        window._comboPage[type] = parseInt(btn.dataset.page,10);
+        const data = window._lastComboData && window._lastComboData[type];
+        if (data) { document.getElementById(outId).innerHTML = renderComboTable(data, type); bindComboSort(type); bindComboPager(type, pageCount); }
+      };
+    });
+  }
+
+  async function fetchData() {
+    if (sessionStorage.getItem('ga_auth') !== 'true') { logout(); return; }
+    const btn = document.getElementById('fetchBtn');
+    const range = buildDateRange();
+    if (!range) { btn.disabled = false; return; }
+    btn.disabled = true;
+    document.getElementById('summary-output').innerHTML = '<p class="loading">🔄 Analysiere Daten...</p>';
+    document.getElementById('category-output').innerHTML = '';
+    document.getElementById('product-output').innerHTML = '';
+    try {
+      const res = await fetch(DATA_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-auth': 'session-granted' }, body: JSON.stringify({ dateRange: range }) });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) throw new Error(`Server-Antwort: ${res.status} ${res.statusText}`);
+      const responseText = await res.text();
+      if (!responseText || responseText.trim() === '') throw new Error('⚠️ Webhook hat leere Antwort zurückgegeben.');
+      let rawResult = JSON.parse(responseText);
+      let data = null;
+      if (rawResult && typeof rawResult === 'object') {
+        if (rawResult.part1_key_metrics) data = rawResult;
+        else if (Array.isArray(rawResult) && rawResult.length > 0) {
+          const firstItem = rawResult[0];
+          if (firstItem?.json?.part1_key_metrics) data = firstItem.json;
+          else if (firstItem?.part1_key_metrics) data = firstItem;
         }
       }
-    }
+      if (!data || !data.part1_key_metrics) throw new Error('Datenstruktur ungültig – erwartet: part1_key_metrics');
 
-    // 8. Validierung der erwarteten Daten
-    if (!data || !data.part1_key_metrics) {
-      console.warn('⚠️ Unerwartete Datenstruktur:', rawResult);
-      throw new Error('Datenstruktur ungültig – erwartet: part1_key_metrics');
-    }
+      document.getElementById('summary-output').innerHTML = renderSummary(data.part1_key_metrics);
+      window._lastComboData = { category: data.part2_category_combinations || [], product: data.part2_product_combinations || [] };
+      
+      // ⬇️ WICHTIG: Daten für KI zwischenspeichern
+      window._storedData = {
+        metrics: data.part1_key_metrics,
+        categories: data.part2_category_combinations || [],
+        products: data.part2_product_combinations || []
+      };
 
-    // 9. UI rendern: Summary Metrics
-    document.getElementById('summary-output').innerHTML = renderSummary(data.part1_key_metrics);
-    
-    // 10. Daten für Tabs speichern
-    window._lastComboData = {
-      category: data.part2_category_combinations || [],
-      product: data.part2_product_combinations || []
-    };
-    
-    // 11. Kategorie-Tabelle rendern
-    if (data.part2_category_combinations?.length > 0) {
-      document.getElementById('category-output').innerHTML = renderComboTable(data.part2_category_combinations, 'category');
-      bindComboSort('category');
-      bindComboPager('category', Math.ceil(data.part2_category_combinations.length / 25));
-    } else {
-      document.getElementById('category-output').innerHTML = '<p class="no-data">Keine Kategorie-Kombinationen mit Support ≥0.5% und Lift ≥1.0 gefunden.</p>';
-    }
-    
-    // 12. Produkt-Tabelle rendern
-    if (data.part2_product_combinations?.length > 0) {
-      document.getElementById('product-output').innerHTML = renderComboTable(data.part2_product_combinations, 'product');
-      bindComboSort('product');
-      bindComboPager('product', Math.ceil(data.part2_product_combinations.length / 25));
-    } else {
-      document.getElementById('product-output').innerHTML = '<p class="no-data">Keine Produkt-Kombinationen mit Support ≥0.5% und Lift ≥1.0 gefunden.</p>';
-    }
-
-  } catch (e) {
-    // 13. Fehler anzeigen
-    console.error('💥 fetchData error:', e);
-    document.getElementById('summary-output').innerHTML = `
-      <p class="error">
-        <strong>❌ Fehler beim Laden:</strong><br>
-        ${e.message}
-      </p>
-    `;
-  } finally {
-    // 14. Button wieder freigeben
-    btn.disabled = false;
+      if (data.part2_category_combinations?.length > 0) {
+        document.getElementById('category-output').innerHTML = renderComboTable(data.part2_category_combinations, 'category');
+        bindComboSort('category'); bindComboPager('category', Math.ceil(data.part2_category_combinations.length / 25));
+      } else document.getElementById('category-output').innerHTML = '<p class="no-data">Keine Kategorie-Kombinationen gefunden.</p>';
+      
+      if (data.part2_product_combinations?.length > 0) {
+        document.getElementById('product-output').innerHTML = renderComboTable(data.part2_product_combinations, 'product');
+        bindComboSort('product'); bindComboPager('product', Math.ceil(data.part2_product_combinations.length / 25));
+      } else document.getElementById('product-output').innerHTML = '<p class="no-data">Keine Produkt-Kombinationen gefunden.</p>';
+    } catch (e) {
+      console.error('💥 fetchData error:', e);
+      document.getElementById('summary-output').innerHTML = `<p class="error"><strong>❌ Fehler:</strong><br>${e.message}</p>`;
+    } finally { btn.disabled = false; }
   }
-}
 
-    // Init
-    document.addEventListener('DOMContentLoaded', () => {
-      updateDateRangeDisplay();
-      document.getElementById('dateRange').addEventListener('change', updateDateRangeDisplay);
-      document.getElementById('pw').addEventListener('keypress', e => { if(e.key==='Enter') login(); });
-    });
-  </script>
-  <script src="../sidebar-nav.js"></script>
+  // ⬇️ NEU: KI Funktion
+  async function generateBundles() {
+    const btn = document.getElementById('bundleBtn');
+    const out = document.getElementById('aiOutputBundles');
+    if (!window._storedData) { alert('Bitte zuerst auf "Analysieren" klicken, um Daten zu laden!'); return; }
+    btn.disabled = true; btn.textContent = '⏳ KI arbeitet...'; out.innerHTML = '<p class="loading">🔄 Generiere Empfehlungen...</p>';
+    try {
+      const res = await fetch(AI_BUNDLES_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-auth': 'session-granted' },
+        body: JSON.stringify({
+          dateRange: buildDateRange(),
+          categories: window._storedData.categories.slice(0, 20),
+          products: window._storedData.products.slice(0, 30)
+        })
+      });
+      const data = await res.json();
+      marked.setOptions({ breaks: true, gfm: true }); // Aktiviert GitHub-Markdown (Tabellen, etc.)
+      out.innerHTML = marked.parse(data.message || 'Keine Antwort erhalten.');
+    } catch (e) {
+      console.error(e); out.innerHTML = `<p class="error">❌ Fehler: ${e.message}</p>`;
+    } finally {
+      btn.disabled = false; btn.textContent = '🎁 Bundles & Aktionsideen generieren';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    updateDateRangeDisplay();
+    document.getElementById('pw').addEventListener('keypress', e => { if(e.key==='Enter') login(); });
+  });
+</script>
 </body>
 </html>
