@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="../styles/theme.css">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
         /* KI-Auswertung Buttons nebeneinander */
@@ -117,7 +117,7 @@
     
     .controls {
       background: #f7f7f7;
-      padding: 1.2rem 1rem 1rem 1rem;
+      padding: 0rem 1rem 1rem 1rem;
       border-radius: 0px;
       border: 1px solid #ececec;
       margin-bottom: 1.2rem;
@@ -309,15 +309,15 @@
         <div class="board-main">
           <div id="dashboard">
             <div class="surface-card" style="margin-bottom:12px;">
-              <div class="header-top" style="justify-content:space-between; align-items:center; gap:10px;">
-                <h1 class="page-title">🛒 GA Warenkorbanalyse</h1>
+              <div class="header-top" style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                <h1 class="page-title" style="margin:0;">🛒 GA Warenkorbanalyse</h1>
                 <div style="display:flex; flex-direction:row; align-items:center; gap:14px;">
                   <div id="dateRangeDisplay" style="font-size:0.98em; color:#888;"></div>
-                  <button class="btn-logout btn-mini" onclick="logout()">Abmelden</button>
+                  <button class="btn-logout btn-mini" onclick="logout()" style="margin-left:18px;">Abmelden</button>
                 </div>
               </div>
               <p class="page-subtitle">Market Basket Analysis für Kategorie- und Produkt-Kombinationen</p>
-              <div class="controls" style="margin-top:10px;">
+              <div class="controls" style="margin-top:0.5rem;">
                 <div class="control-group">
                   <label for="dateRange" class="hidden">Zeitraum</label>
                   <select id="dateRange" class="hidden" onchange="toggleCustomDate()">
