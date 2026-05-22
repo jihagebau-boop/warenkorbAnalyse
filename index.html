@@ -9,8 +9,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="theme.css">
   <style>
-      .pager { display: flex; flex-direction: row !important; flex-wrap: nowrap !important; overflow-x: auto; align-items: center; gap: 0.2em; font-size: 0.98em; justify-content: flex-end; margin-top: 10px; }
-      .pager-btn { margin-bottom: 0 !important; white-space: nowrap; padding: 2px 5px; min-width: 1.7em; font-size: 0.97em; }
+        /* KI-Auswertung Buttons nebeneinander */
+        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn-group .btn, .btn-group .btn-secondary { display: inline-block !important; min-width: 0 !important; width: auto !important; flex: 0 0 auto; }
+      .pager { display: flex; flex-direction: row !important; flex-wrap: nowrap !important; overflow-x: auto; align-items: center; gap: 0.2em; font-size: 0.8em; justify-content: flex-end; margin-top: 10px; }
+      .pager-btn { margin-bottom: 0 !important; white-space: nowrap; padding: 1px 3px; min-width: 1.1em; font-size: 0.85em; border-radius: 3px; }
     body {
       font-family: Arial, sans-serif !important;
       background: var(--bg-app);
@@ -31,7 +34,7 @@
       margin: 10vh auto;
       background: var(--card);
       padding: 1.5rem;
-      border-radius: 2px;
+      border-radius: 0px;
       border: 1px solid var(--line, #d8d2cf);
       box-shadow: none;
     }
@@ -54,13 +57,13 @@
     }
     .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; }
     .header h1 { margin: 0; font-size: 1.2rem; }
-    .btn-logout { background: #e8e8e8; color: var(--text); border: 1px solid var(--line, #d8d2cf); padding: 0.4rem 0.7rem; border-radius: 2px; cursor: pointer; }
+    .btn-logout { background: #e8e8e8; color: var(--text); border: 1px solid var(--line, #d8d2cf); padding: 0.4rem 0.7rem; border-radius: 0px; cursor: pointer; }
     .btn-logout:hover { opacity: 0.9; }
     
     .controls {
       background: #f7f7f7;
       padding: 1.2rem 1rem 1rem 1rem;
-      border-radius: 8px;
+      border-radius: 0px;
       border: 1px solid #ececec;
       margin-bottom: 1.2rem;
       display: flex;
@@ -74,7 +77,7 @@
       width: 100%;
       padding: 0.7rem 0.9rem;
       border: 1px solid #e0e0e0;
-      border-radius: 7px;
+      border-radius: 0px;
       font-size: 1rem;
       background: #fff;
       font-family: Arial, sans-serif !important;
@@ -116,7 +119,7 @@
     .metric-card {
       background: #f7f7f7;
       padding: 1.1rem 0.7rem;
-      border-radius: 8px;
+      border-radius: 0px;
       border: 1px solid #ececec;
       box-shadow: none;
       text-align: center;
@@ -132,14 +135,14 @@
     }
     .metric-card small {
       color: #6b778c;
-      font-size: 0.93rem;
+      font-size: 0.8rem;
     }
     
     /* Tabelle */
     .table-wrapper {
       background: #fff;
       padding: 1.2rem 0.7rem 0.7rem 0.7rem;
-      border-radius: 8px;
+      border-radius: 0px;
       border: 1px solid #ececec;
       box-shadow: 0 1px 6px rgba(0,0,0,0.03);
       overflow-x: auto;
@@ -147,7 +150,7 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.97rem;
+      font-size: 0.8rem;
       min-width: 600px;
       background: #fff;
     }
@@ -197,7 +200,7 @@
       position: relative;
       z-index: 10;
       box-shadow: 0 4px 12px rgba(0,0,0,0.10);
-      border-radius: 6px;
+      border-radius: 0px;
       padding: 0.5rem;
     }
     
@@ -257,11 +260,11 @@
                   <div id="customDateInputs" style="margin-top:0.8rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
                     <div style="flex:1;min-width:140px;">
                       <label style="font-size:0.75rem;color:var(--text-muted);display:block;margin-bottom:0.3rem;">Von</label>
-                      <input type="date" id="dateFrom" style="width:100%;padding:0.6rem;border:1px solid var(--border);border-radius:2px;font-size:0.9rem;font-family:inherit;">
+                      <input type="date" id="dateFrom" style="width:100%;padding:0.6rem;border:1px solid var(--border);border-radius:0px;font-size:0.9rem;font-family:inherit;">
                     </div>
                     <div style="flex:1;min-width:140px;">
                       <label style="font-size:0.75rem;color:var(--text-muted);display:block;margin-bottom:0.3rem;">Bis</label>
-                      <input type="date" id="dateTo" style="width:100%;padding:0.6rem;border:1px solid var(--border);border-radius:2px;font-size:0.9rem;font-family:inherit;">
+                      <input type="date" id="dateTo" style="width:100%;padding:0.6rem;border:1px solid var(--border);border-radius:0px;font-size:0.9rem;font-family:inherit;">
                     </div>
                   </div>
                 </div>
@@ -296,24 +299,46 @@
               </div>
             </div>
 
+            <!-- KI Auswertung (Frontend, Dummy) -->
+            <section class="surface-card" id="sec-ai" style="margin-bottom:18px;">
+              <div class="section-header">
+                <h2 class="section-title">KI-Auswertung <span class="ai-badge" id="aiBadge" style="display:none;">Azure GPT-4o</span></h2>
+              </div>
+              <div class="btn-group" style="margin-bottom:10px;">
+                <button class="btn" style="background:var(--accent,#2f8e63);color:#191919;display:inline-block;min-width:0;">Bundles &amp; Aktionsideen generieren</button>
+                <button class="btn btn-secondary" style="display:inline-block;min-width:0;">Zusammenfassung generieren</button>
+              </div>
+              <div class="ai-panels">
+                <div>
+                  <h3 class="ai-panel-title" style="font-size:0.82rem;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;margin:0 0 6px;">Teil A - Bundles &amp; Aktionsideen</h3>
+                  <div class="ai-output" id="aiOutputBundles" style="background:#f9faf9;border:1px solid #ececec;border-radius:2px;padding:14px;font-size:0.84rem;line-height:1.55;white-space:normal;display:block;margin-top:10px;min-height:38px;color:#888;">(Noch keine Auswertung)</div>
+                </div>
+                <div>
+                  <h3 class="ai-panel-title" style="font-size:0.82rem;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;margin:0 0 6px;">Teil B - Zusammenfassung</h3>
+                  <div class="summary-viz" id="summaryViz" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px;"></div>
+                  <div class="ai-output summary-output" id="aiOutputSummary" style="background:#fbfcfb;border:1px solid #ececec;border-radius:2px;padding:14px;font-size:0.84rem;line-height:1.55;white-space:normal;display:block;min-height:38px;color:#888;">(Noch keine Auswertung)</div>
+                </div>
+              </div>
+            </section>
+
             <!-- Erklärung -->
-            <div class="surface-card" style="margin-bottom:18px; padding:1.2rem 1.2rem 1.2rem 1.2rem;">
-              <div class="metrics-guide-flex" style="display:flex; gap:2.5rem; flex-wrap:wrap; font-size:0.93em; color:#444;">
+            <div class="surface-card" style="margin-bottom:0px; padding:1.2rem 1.2rem 1.2rem 1.2rem;">
+              <div class="metrics-guide-flex" style="display:flex; gap:2.5rem; flex-wrap:wrap; font-size:0.8em; color:#444;">
                 <div style="flex:1 1 260px; min-width:220px;">
                   <div style="font-size:0.98em; font-weight:600; margin-bottom:0.5em; text-transform: lowercase; letter-spacing:0.01em;">Anleitung: kennzahlen berechnen &amp; interpretieren</div>
                   <div style="margin-bottom:0.7em;">
                     <b style="text-transform:lowercase;">support:</b><br>
-                    <span style="font-size:0.97em;">support(a+b) = häufigkeit(a+b) / alle transaktionen</span><br>
+                    <span style="font-size:0.8em;">support(a+b) = häufigkeit(a+b) / alle transaktionen</span><br>
                     <span style="color:#666;">zeigt, wie oft a und b zusammen gekauft werden. hoher support bedeutet hohe reichweite.</span>
                   </div>
                   <div style="margin-bottom:0.7em;">
                     <b style="text-transform:lowercase;">konfidenz:</b><br>
-                    <span style="font-size:0.97em;">konfidenz(a→b) = support(a+b) / support(a)</span><br>
+                    <span style="font-size:0.8em;">konfidenz(a→b) = support(a+b) / support(a)</span><br>
                     <span style="color:#666;">wahrscheinlichkeit, dass b im warenkorb liegt, wenn a enthalten ist.</span>
                   </div>
                   <div style="margin-bottom:0.7em;">
                     <b style="text-transform:lowercase;">lift:</b><br>
-                    <span style="font-size:0.97em;">lift(a,b) = support(a+b) / (support(a) × support(b))</span><br>
+                    <span style="font-size:0.8em;">lift(a,b) = support(a+b) / (support(a) × support(b))</span><br>
                     <span style="color:#666;">misst den echten zusammenhang jenseits des zufalls.<br>lift &gt; 1: positive assoziation<br>lift = 1: kein effekt<br>lift &lt; 1: eher gegenläufig</span>
                   </div>
                 </div>
@@ -321,19 +346,19 @@
                   <div style="font-size:0.98em; font-weight:600; margin-bottom:0.5em; text-transform: lowercase; letter-spacing:0.01em;">Interpretation in der praxis</div>
                   <div style="margin-bottom:0.7em;">
                     <b style="text-transform:lowercase;">teil 1 kpi:</b><br>
-                    <span style="font-size:0.97em;">anteil kombi-bestellungen = bestellungen mit kombination / bestellungen gesamt</span><br>
-                    <span style="font-size:0.97em;">ø revenue/kombi-bestellung zeigt upsell-potenzial von warenkörben mit mehreren kategorien</span><br>
-                    <span style="font-size:0.97em;">ø kategorien/kombi zeigt warenkorb-breite</span>
+                    <span style="font-size:0.8em;">anteil kombi-bestellungen = bestellungen mit kombination / bestellungen gesamt</span><br>
+                    <span style="font-size:0.8em;">ø revenue/kombi-bestellung zeigt upsell-potenzial von warenkörben mit mehreren kategorien</span><br>
+                    <span style="font-size:0.8em;">ø kategorien/kombi zeigt warenkorb-breite</span>
                   </div>
                   <div style="margin-bottom:0.7em;">
                     <b style="text-transform:lowercase;">teil 2 tabellen:</b><br>
-                    <span style="font-size:0.97em;">hoher lift + ausreichende orders = starker bundle-kandidat</span><br>
-                    <span style="font-size:0.97em;">hohe konfidenz a→b = gute empfehlung von a nach b</span><br>
-                    <span style="font-size:0.97em;">nur hoher lift ohne volumen kann instabil sein</span>
+                    <span style="font-size:0.8em;">hoher lift + ausreichende orders = starker bundle-kandidat</span><br>
+                    <span style="font-size:0.8em;">hohe konfidenz a→b = gute empfehlung von a nach b</span><br>
+                    <span style="font-size:0.8em;">nur hoher lift ohne volumen kann instabil sein</span>
                   </div>
                   <div style="margin-bottom:0.7em;">
                     <b style="text-transform:lowercase;">daumenregel für priorisierung</b>
-                    <ol style="margin-bottom:0; font-size:0.97em; padding-left:1.2em;">
+                    <ol style="margin-bottom:0; font-size:0.8em; padding-left:1.2em;">
                       <li>lift (signalstärke)</li>
                       <li>orders/support (reichweite)</li>
                       <li>revenue (wirtschaftliche wirkung)</li>
@@ -506,7 +531,7 @@
         const liftClass = liftVal >= 1.5 ? 'lift-high' : liftVal >= 1.2 ? 'lift-mid' : 'lift-low';
         const liftIcon = liftVal > 1 ? '↑' : liftVal < 1 ? '↓' : '→';
         html += `<tr>
-          <td class="combo-cell" title="${esc(row.combination)}"><strong>${esc(row.combination)}</strong></td>
+          <td class="combo-cell" title="${esc(row.combination)}">${esc(row.combination)}</td>
           <td>${row.orders}</td>
           <td>${parseFloat(row.revenue).toLocaleString('de-DE',{minimumFractionDigits:2})} €</td>
           <td>${row.support}</td>
@@ -518,11 +543,9 @@
 
       if (pageCount > 1) {
         html += '<div class="pager">';
-        html += '<span style="color:#888;">Seite:</span>';
         for (let i = 0; i < pageCount; ++i) {
           html += `<button class="pager-btn${i===page?' active':''}" data-page="${i}">${i+1}</button>`;
         }
-        html += `<span style="color:#888; margin-left:0.7em;">(${total} Einträge)</span>`;
         html += '</div>';
       }
       return html;
