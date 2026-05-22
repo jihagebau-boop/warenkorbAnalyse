@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="../styles/theme.css">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
         /* KI-Auswertung Buttons nebeneinander */
@@ -31,15 +31,69 @@
     
     /* Login */
     .login-box {
-      max-width: 420px;
-      margin: 10vh auto;
-      background: var(--card);
-      padding: 1.5rem;
-      border-radius: 0px;
-      border: 1px solid var(--line, #d8d2cf);
-      box-shadow: none;
+      max-width: 400px;
+      margin: 12vh auto 0 auto;
+      background: #fff;
+      padding: 2.2rem 2rem 2rem 2rem;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 1.1rem;
     }
-    .login-box h2 { margin-top: 0; }
+    .login-box h2 {
+      margin-top: 0;
+      margin-bottom: 0.7em;
+      text-align: center;
+      font-size: 1.3em;
+      font-weight: 700;
+      color: #222;
+    }
+    .login-box input[type="password"] {
+      font-size: 1.08em;
+      padding: 0.85em 1em;
+      border-radius: 4px;
+      border: 1px solid #d8d2cf;
+      margin-bottom: 0.5em;
+      margin-top: 0.2em;
+      background: #fafbfc;
+      transition: border 0.2s;
+    }
+    .login-box input[type="password"]:focus {
+      border-color: var(--accent, #2f8e63);
+      outline: 2px solid var(--accent, #2f8e63);
+      background: #fff;
+    }
+    .login-box button {
+      margin-top: 0.5em;
+      font-size: 1.08em;
+      padding: 0.85em 1em;
+      border-radius: 4px;
+      width: 100%;
+      background: var(--accent, #2f8e63);
+      color: #fff;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .login-box button:hover {
+      background: #21704d;
+    }
+    .login-box .error {
+      color: #b8002f;
+      background: #ffe6ea;
+      border-radius: 4px;
+      padding: 0.7em 1em;
+      text-align: center;
+      font-size: 1em;
+      margin-top: 0.2em;
+      margin-bottom: 0;
+      border: 1px solid #f5b6c4;
+      box-shadow: 0 1px 4px rgba(184,0,47,0.04);
+    }
     
     /* Dashboard */
     #dashboard { width: 100%; }
@@ -367,7 +421,7 @@
                     <span style="font-size:0.8em;">nur hoher lift ohne volumen kann instabil sein</span>
                   </div>
                   <div style="margin-bottom:0.7em;">
-                    <b>daumenregel für priorisierung</b>
+                    <b style="text-transform:lowercase;">daumenregel für priorisierung</b>
                     <ol style="margin-bottom:0; font-size:0.8em; padding-left:1.2em;">
                       <li>lift (signalstärke)</li>
                       <li>orders/support (reichweite)</li>
