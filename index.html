@@ -4,47 +4,31 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GA Warenkorbanalyse</title>
-  
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
-  <!-- Markdown Parser -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  
-  <!-- Theme CSS -->
   <link rel="stylesheet" href="theme.css">
 </head>
 <body>
 
-  <!-- ==========================
-       LOGIN VIEW
-       ========================== -->
   <div id="login-view" class="login-box">
     <h2>🔒 Interner Bereich</h2>
-    <div style="margin-bottom: 20px;">
-      <input type="password" id="pw" placeholder="Passwort eingeben">
-    </div>
+    <div style="margin-bottom: 20px;"><input type="password" id="pw" placeholder="Passwort eingeben"></div>
     <button class="btn-primary" onclick="login()" id="loginBtn" style="width:100%">Zugang prüfen</button>
     <p id="err" class="error hidden" style="margin-top:15px;">Falsches Passwort oder Verbindungsfehler</p>
   </div>
 
-  <!-- ==========================
-       DASHBOARD VIEW
-       ========================== -->
   <div id="dashboard-view" class="hidden">
     <main class="page-shell">
       <div class="board-layout">
         <div class="board-main">
           
-          <!-- Header & Controls -->
           <div class="dashboard-header">
             <div>
-              <h1 class="page-title"> GA Warenkorbanalyse</h1>
+              <h1 class="page-title">🛒 GA Warenkorbanalyse</h1>
               <p class="page-subtitle">Market Basket Analysis für Kategorie- und Produkt-Kombinationen</p>
             </div>
-            
             <div style="display:flex; align-items:center; gap:16px;">
               <div id="dateRangeDisplay" style="font-size:0.9em; color:var(--text-muted);"></div>
               <button class="btn-logout" onclick="logout()">Abmelden</button>
@@ -53,32 +37,27 @@
 
           <div class="dashboard-controls">
             <div class="control-group" style="flex:2; min-width: 250px;">
-              <label for="dateRange">Zeitraum wählen</label>
+              <label>Zeitraum wählen</label>
               <div class="date-inputs">
                 <input type="date" id="dateFrom">
                 <input type="date" id="dateTo">
               </div>
             </div>
-            
             <div class="control-group" style="min-width: 150px;">
               <label>&nbsp;</label>
-              <button class="btn-primary" onclick="fetchData()" id="fetchBtn">
-                ⚡ Analysieren
-              </button>
+              <button class="btn-primary" onclick="fetchData()" id="fetchBtn">⚡ Analysieren</button>
             </div>
           </div>
 
-          <!-- Metrics Overview -->
           <div id="summary-output" class="metrics-grid" style="margin-top: 24px;"></div>
 
-          <!-- Data Tabs -->
+          <!-- ✅ TABS BEREICH -->
           <div class="card" style="margin-top: 24px;">
             <div class="tabs">
               <button class="tab-btn active" onclick="showTab('categories')">🏷️ Kategorien</button>
               <button class="tab-btn" onclick="showTab('products')">📦 Produkte</button>
             </div>
 
-            <!-- Tab: Categories -->
             <div id="tab-categories" class="tab-content active">
               <div class="table-wrapper">
                 <h3 class="section-title" style="padding:16px 16px 0; margin:0;">Kategorie-Kombinationen</h3>
@@ -86,7 +65,6 @@
               </div>
             </div>
 
-            <!-- Tab: Products -->
             <div id="tab-products" class="tab-content">
               <div class="table-wrapper">
                 <h3 class="section-title" style="padding:16px 16px 0; margin:0;">Produkt-Kombinationen</h3>
@@ -94,40 +72,69 @@
               </div>
             </div>
           </div>
+          <!-- ✅ ENDE TABS -->
 
-          <!-- AI Insights Section -->
           <div class="card ai-section" id="sec-ai" style="margin-top: 24px;">
             <div class="card-header">
               <h2 class="section-title" style="margin:0;"> KI-Auswertung <span style="font-size:0.8rem; color:var(--accent); font-weight:400;">Powered by Azure GPT</span></h2>
-              <button class="btn-primary" onclick="generateBundles()" id="bundleBtn">
-                🎁 Bundles generieren
-              </button>
+              <button class="btn-primary" onclick="generateBundles()" id="bundleBtn">🎁 Bundles generieren</button>
             </div>
-            
             <div class="ai-output" id="aiOutputBundles">
-              <p style="color:var(--text-muted); text-align:center; padding:20px;">
-                Klicke oben auf "Bundles generieren", um KI-basierte Empfehlungen zu erhalten.
-              </p>
+              <p style="color:var(--text-muted); text-align:center; padding:20px;">Klicke oben auf "Bundles generieren", um KI-basierte Empfehlungen zu erhalten.</p>
             </div>
           </div>
 
-          <!-- Footer / Guide -->
-          <div style="margin-top: 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; opacity: 0.7;">
-            <div>
-              <h4 style="margin-bottom: 10px;">Kennzahlen Erklärung</h4>
-              <p style="font-size:0.9rem;">
-                <strong>Support:</strong> Wie oft A & B zusammen gekauft wurden.<br>
-                <strong>Confidence:</strong> Wahrscheinlichkeit, dass B gekauft wird, wenn A im Warenkorb liegt.<br>
-                <strong>Lift:</strong> Stärke der Assoziation im Vergleich zum Zufall. Lift > 1 ist positiv.
-              </p>
+          <div class="grid-two" style="margin-top: 24px;">
+            <div class="card">
+              <h3 class="section-title">Anleitung: Kennzahlen berechnen & interpretieren</h3>
+              <div style="margin-bottom: 1.2rem;">
+                <strong style="display:block; margin-bottom:4px; color:var(--accent);">Support</strong>
+                <code style="display:block; background:var(--surface-hover); padding:4px 8px; border-radius:4px; font-size:0.85rem; margin-bottom:4px;">support(a+b) = häufigkeit(a+b) / alle transaktionen</code>
+                <span style="font-size:0.9rem; color:var(--text-muted);">Zeigt, wie oft A und B zusammen gekauft werden. Hoher Support bedeutet hohe Reichweite.</span>
+              </div>
+              <div style="margin-bottom: 1.2rem;">
+                <strong style="display:block; margin-bottom:4px; color:var(--accent);">Konfidenz</strong>
+                <code style="display:block; background:var(--surface-hover); padding:4px 8px; border-radius:4px; font-size:0.85rem; margin-bottom:4px;">konfidenz(a→b) = support(a+b) / support(a)</code>
+                <span style="font-size:0.9rem; color:var(--text-muted);">Wahrscheinlichkeit, dass B im Warenkorb liegt, wenn A enthalten ist.</span>
+              </div>
+              <div style="margin-bottom: 1.2rem;">
+                <strong style="display:block; margin-bottom:4px; color:var(--accent);">Lift</strong>
+                <code style="display:block; background:var(--surface-hover); padding:4px 8px; border-radius:4px; font-size:0.85rem; margin-bottom:4px;">lift(a,b) = support(a+b) / (support(a) × support(b))</code>
+                <span style="font-size:0.9rem; color:var(--text-muted);">Misst den echten Zusammenhang jenseits des Zufalls.</span>
+                <ul style="margin:8px 0 0 16px; font-size:0.9rem; color:var(--text-muted);">
+                  <li>Lift &gt; 1: Positive Assoziation 🟢</li>
+                  <li>Lift = 1: Kein Effekt ⚪</li>
+                  <li>Lift &lt; 1: Eher gegenläufig 🔴</li>
+                </ul>
+              </div>
             </div>
-            <div>
-              <h4 style="margin-bottom: 10px;">Interpretation</h4>
-              <p style="font-size:0.9rem;">
-                Hoher Lift + Hohe Orders = Perfektes Bundle.<br>
-                Hoher Lift + Niedrige Orders = Nischen-Produkt.<br>
-                Niedriger Lift = Keine Beziehung.
-              </p>
+
+            <div class="card">
+              <h3 class="section-title">Interpretation in der Praxis</h3>
+              <div style="margin-bottom: 1.2rem;">
+                <strong style="display:block; margin-bottom:8px; color:var(--accent);">Teil 1: KPIs</strong>
+                <ul style="margin:0; padding-left:16px; font-size:0.9rem; color:var(--text-muted); line-height:1.6;">
+                  <li><strong>Anteil Kombi-Bestellungen</strong> = Bestellungen mit Kombination / Bestellungen gesamt</li>
+                  <li><strong>Ø Revenue/Kombi-Bestellung</strong> zeigt Upsell-Potenzial von Warenkörben mit mehreren Kategorien</li>
+                  <li><strong>Ø Kategorien/Kombi</strong> zeigt Warenkorb-Breite</li>
+                </ul>
+              </div>
+              <div style="margin-bottom: 1.2rem;">
+                <strong style="display:block; margin-bottom:8px; color:var(--accent);">Teil 2: Tabellen</strong>
+                <ul style="margin:0; padding-left:16px; font-size:0.9rem; color:var(--text-muted); line-height:1.6;">
+                  <li><strong>Hoher Lift + ausreichende Orders</strong> = Starker Bundle-Kandidat</li>
+                  <li><strong>Hohe Konfidenz A→B</strong> = Gute Empfehlung von A nach B</li>
+                  <li><strong>Nur hoher Lift ohne Volumen</strong> kann instabil sein</li>
+                </ul>
+              </div>
+              <div>
+                <strong style="display:block; margin-bottom:8px; color:var(--accent);">Daumenregel für Priorisierung</strong>
+                <ol style="margin:0; padding-left:16px; font-size:0.9rem; color:var(--text-muted); line-height:1.6;">
+                  <li><strong>Lift</strong> (Signalstärke)</li>
+                  <li><strong>Orders/Support</strong> (Reichweite)</li>
+                  <li><strong>Revenue</strong> (Wirtschaftliche Wirkung)</li>
+                </ol>
+              </div>
             </div>
           </div>
 
@@ -136,21 +143,15 @@
     </main>
   </div>
 
-  <!-- ==========================
-       JAVASCRIPT (VOLLSTÄNDIG)
-       ========================== -->
   <script>
     const LOGIN_URL = 'https://hagebau.app.n8n.cloud/webhook/login';
     const DATA_URL  = 'https://hagebau.app.n8n.cloud/webhook/data';
     const AI_BUNDLES_URL = 'https://hagebau.app.n8n.cloud/webhook/ai-bundles';
-
-    // Global State
     window._comboSort = { category: {col:'orders',dir:'desc'}, product: {col:'orders',dir:'desc'} };
     window._comboPage = { category: 0, product: 0 };
     window._lastComboData = null;
     window._storedData = null;
 
-    // Auth Check
     if (sessionStorage.getItem('ga_auth') === 'true') {
       document.getElementById('login-view').classList.add('hidden');
       document.getElementById('dashboard-view').classList.remove('hidden');
@@ -167,7 +168,6 @@
         else { err.classList.remove('hidden'); }
       } catch { err.classList.remove('hidden'); } finally { btn.disabled = false; }
     }
-
     function logout() { sessionStorage.removeItem('ga_auth'); location.reload(); }
 
     function showTab(tab) {
@@ -188,7 +188,6 @@
       }
       updateDateRangeDisplay();
     }
-
     function buildDateRange() {
       const from = document.getElementById('dateFrom').value;
       const to = document.getElementById('dateTo').value;
@@ -197,7 +196,6 @@
       if (to > today) { alert('Enddatum darf nicht in der Zukunft liegen.'); return null; }
       return `${from.replace(/-/g, '')}:${to.replace(/-/g, '')}`;
     }
-
     function updateDateRangeDisplay() {
       const from = document.getElementById('dateFrom').value;
       const to = document.getElementById('dateTo').value;
@@ -279,7 +277,6 @@
         };
       });
     }
-
     function bindComboPager(type, pageCount) {
       const outId = type==='category' ? 'category-output' : 'product-output';
       const el = document.getElementById(outId);
@@ -307,7 +304,7 @@
         if (res.status === 401) { logout(); return; }
         if (!res.ok) throw new Error(`Server-Antwort: ${res.status} ${res.statusText}`);
         const responseText = await res.text();
-        if (!responseText || responseText.trim() === '') throw new Error('️ Webhook hat leere Antwort zurückgegeben.');
+        if (!responseText || responseText.trim() === '') throw new Error('⚠️ Webhook hat leere Antwort zurückgegeben.');
         let rawResult = JSON.parse(responseText);
         let data = null;
         if (rawResult && typeof rawResult === 'object') {
@@ -322,11 +319,7 @@
 
         document.getElementById('summary-output').innerHTML = renderSummary(data.part1_key_metrics);
         window._lastComboData = { category: data.part2_category_combinations || [], product: data.part2_product_combinations || [] };
-        window._storedData = {
-          metrics: data.part1_key_metrics,
-          categories: data.part2_category_combinations || [],
-          products: data.part2_product_combinations || []
-        };
+        window._storedData = { metrics: data.part1_key_metrics, categories: data.part2_category_combinations || [], products: data.part2_product_combinations || [] };
 
         if (data.part2_category_combinations?.length > 0) {
           document.getElementById('category-output').innerHTML = renderComboTable(data.part2_category_combinations, 'category');
@@ -349,23 +342,13 @@
       if (!window._storedData) { alert('Bitte zuerst auf "Analysieren" klicken, um Daten zu laden!'); return; }
       btn.disabled = true; btn.textContent = '⏳ KI arbeitet...'; out.innerHTML = '<p class="loading">🔄 Generiere Empfehlungen...</p>';
       try {
-        const res = await fetch(AI_BUNDLES_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-auth': 'session-granted' },
-          body: JSON.stringify({
-            dateRange: buildDateRange(),
-            categories: window._storedData.categories.slice(0, 20),
-            products: window._storedData.products.slice(0, 30)
-          })
-        });
+        const res = await fetch(AI_BUNDLES_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-auth': 'session-granted' }, body: JSON.stringify({ dateRange: buildDateRange(), categories: window._storedData.categories.slice(0, 20), products: window._storedData.products.slice(0, 30) }) });
         const data = await res.json();
         marked.setOptions({ breaks: true, gfm: true });
         out.innerHTML = marked.parse(data.message || 'Keine Antwort erhalten.');
       } catch (e) {
-        console.error(e); out.innerHTML = `<p class="error">❌ Fehler: ${e.message}</p>`;
-      } finally {
-        btn.disabled = false; btn.textContent = '🎁 Bundles generieren';
-      }
+        console.error(e); out.innerHTML = `<p class="error"> Fehler: ${e.message}</p>`;
+      } finally { btn.disabled = false; btn.textContent = '🎁 Bundles generieren'; }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
