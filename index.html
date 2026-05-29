@@ -606,8 +606,22 @@
       const res = await fetch(DATA_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-auth': 'session-granted' }, body: JSON.stringify({ dateRange: range }) });
       if (res.status === 401) { logout(); return; }
       if (!res.ok) throw new Error(`Server-Antwort: ${res.status} ${res.statusText}`);
+      // ✅ NEU (mit Debug):
       const responseText = await res.text();
-      if (!responseText || responseText.trim() === '') throw new Error('⚠️ Webhook hat leere Antwort zurückgegeben.');
+      console.log('🔍 Response Status:', res.status);
+      console.log('🔍 Response Headers:', Object.fromEntries(res.headers.entries()));
+      console.log('🔍 Response Text (first 500 chars):', responseText.substring(0, 500));
+      
+      if (!responseText || responseText.trim() === '') {
+        console.error('❌ Empty response from webhook');
+        throw new Error('⚠️ Webhook hat leere Antwort zurückgegeben. Siehe Console (F12) für Details.');
+      }
+      
+      // Prüfen auf HTML-Fehlerseite statt JSON
+      if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
+        console.error('❌ Webhook returned HTML instead of JSON');
+        throw new Error('⚠️ Webhook hat HTML statt JSON zurückgegeben (z.B. 404/500 Fehlerseite).');
+      }
       let rawResult = JSON.parse(responseText);
       let data = null;
       if (rawResult && typeof rawResult === 'object') {
