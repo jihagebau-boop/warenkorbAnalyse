@@ -337,44 +337,76 @@
     }
 
     async function generateBundles() {
-      const btn = document.getElementById('bundleBtn');
-      const out = document.getElementById('aiOutputBundles');
-      
-      if (!window._storedData) { 
-        alert('Bitte zuerst auf "Analysieren" klicken, um Daten zu laden!'); 
-        return; 
-      }
-      
-      btn.disabled = true; 
-      btn.textContent = '⏳ KI arbeitet...'; 
-      out.innerHTML = '<p class="loading">🔄 Generiere Empfehlungen...</p>';
-      
-      try {
-        // Bereite Daten vor: Kombiniere Kategorien + Produkte, normalisiere Feldnamen
-        const normalizeItem = (item) => ({
-          combination: item['combination'] || item['KATEGORIE-KOMBINATION'] || item['KOMBINATION'] || '',
-          orders: parseInt(item['orders'] || item['BEST.'] || item['Best.'] || item['best'] || 0),
-          revenue: item['revenue'] || item['REVENUE'] || item['Revenue'] || '0 €',
-          lift: parseFloat(item['lift'] || item['LIFT'] || item['Lift'] || 0),
-          confidence: parseFloat(item['confidence'] || item['KONF.'] || item['KONF'] || item['Confidence'] || 0),
-          support: parseFloat(item['support'] || item['SUPPORT'] || 0)
-        });
-        
-        const categories = (window._storedData.categories || []).slice(0, 20).map(normalizeItem);
-        const products = (window._storedData.products || []).slice(0, 30).map(normalizeItem);
-        
-        const res = await fetch(AI_BUNDLES_URL, { 
-          method: 'POST', 
-          headers: { 'Content-Type': 'application/json', 'x-auth': 'session-granted' }, 
-          body: JSON.stringify({ 
-            dateRange: buildDateRange(),
-            categories: categories,
-            products: products,
-            // Sende auch Rohdaten als Fallback
-            rawCategories: window._storedData.categories?.slice(0, 20),
-            rawProducts: window._storedData.products?.slice(0, 30)
-          }) 
-        });
+  const btn = document.getElementById('bundleBtn');
+  const out = document.getElementById('aiOutputBundles');
+  
+  if (!window._storedData) { 
+    alert('Bitte zuerst auf "Analysieren" klicken, um Daten zu laden!'); 
+    return; 
+  }
+  
+  btn.disabled = true; 
+  btn.textContent = '⏳ KI arbeitet...'; 
+  out.innerHTML = '<p class="loading">🔄 Generiere Empfehlungen...</p>';
+  
+  try {
+    // Helper: Revenue parsen für Sortierung
+    const parseRevenue = (rev) => {
+      if (!rev) return 0;
+      const num = String(rev).replace(/[^\d,]/g, '').replace(',', '.');
+      return parseFloat(num) || 0;
+    };
+    
+    // ✅ LÖSUNG 3: Nach Revenue sortieren + orders >= 5 filtern + Top N nehmen
+    const categories = (window._storedData.categories || [])
+      .slice() // Kopie erstellen (nicht Original verändern)
+      .sort((a, b) => parseRevenue(b.revenue) - parseRevenue(a.revenue)) // Höchster Revenue zuerst
+      .filter(item => (item.orders || 0) >= 5) // Nur statistisch relevante Kombinationen
+      .slice(0, 20); // Top 20 nehmen
+    
+    const products = (window._storedData.products || [])
+      .slice()
+      .sort((a, b) => parseRevenue(b.revenue) - parseRevenue(a.revenue))
+      .filter(item => (item.orders || 0) >= 5)
+      .slice(0, 30);
+    
+    // Normalisieren für die KI (unterstützt alle Key-Varianten)
+    const normalizeItem = (item) => ({
+      combination: item['combination'] || item['KATEGORIE-KOMBINATION'] || item['KOMBINATION'] || '',
+      orders: parseInt(item['orders'] || item['BEST.'] || item['Best.'] || item['best'] || 0),
+      revenue: item['revenue'] || item['REVENUE'] || item['Revenue'] || '0 €',
+      lift: parseFloat(item['lift'] || item['LIFT'] || item['Lift'] || 0),
+      confidence: parseFloat(item['confidence'] || item['KONF.'] || item['KONF'] || item['Confidence'] || 0),
+      support: parseFloat(item['support'] || item['SUPPORT'] || 0)
+    });
+    
+    const normalizedCategories = categories.map(normalizeItem);
+    const normalizedProducts = products.map(normalizeItem);
+    
+    const res = await fetch(AI_BUNDLES_URL, { 
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json', 'x-auth': 'session-granted' }, 
+      body: JSON.stringify({ 
+        dateRange: buildDateRange(),
+        categories: normalizedCategories,
+        products: normalizedProducts,
+        rawCategories: categories,
+        rawProducts: products
+      }) 
+    });
+    
+    const data = await res.json();
+    marked.setOptions({ breaks: true, gfm: true });
+    out.innerHTML = marked.parse(data.message || 'Keine Antwort erhalten.');
+    
+  } catch (e) {
+    console.error('💥 generateBundles error:', e); 
+    out.innerHTML = `<p class="error">❌ Fehler: ${e.message}</p>`;
+  } finally { 
+    btn.disabled = false; 
+    btn.textContent = '🎁 Bundles generieren'; 
+  }
+}
         
         const data = await res.json();
         marked.setOptions({ breaks: true, gfm: true });
