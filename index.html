@@ -94,9 +94,10 @@
     <p style="margin:0 0 8px 0;"><strong>Abschnitt 1: Potenzielle Bundles</strong></p>
     <ul style="margin:0; padding-left:20px; line-height:1.6;">
       <li><strong>Filter:</strong> Nur Kombinationen mit ≥5 Bestellungen und Lift ≥1.2 (statistisch relevant)</li>
-      <li><strong>Sortierung:</strong> Nach Umsatz (Revenue) absteigend – wirtschaftlich wertvollste zuerst</li>
-      <li><strong>Top 10:</strong> Die 10 umsatzstärksten Kombinationen werden angezeigt</li>
-      <li><strong>Beispiel:</strong> Bundle 1 (Sichtschutz + Zubehör) hat mit 47.002€ den höchsten Umsatz + 81 Orders + starken Lift (14.16)</li>
+      <li><strong>Sortierung:</strong> Nach <strong>Potential Score</strong> (Umsatz × Lift) – wirtschaftlich + statistisch relevanteste zuerst</li>
+      <li><strong>Formel:</strong> <code style="background:#fff;padding:2px 6px;border-radius:3px;">Potential = Revenue(€) × Lift</code><br>
+          <small>Beispiel: 47.002€ × 14,16 = 665.562 Potential → Höchste Priorität</small></li>
+      <li><strong>Kontext-Logik:</strong> Der Umsetzungshinweis passt sich automatisch an Confidence, Orders und Lift an</li>
     </ul>
   </div>
 
@@ -206,8 +207,8 @@
     const LOGIN_URL = 'https://hagebau.app.n8n.cloud/webhook/login';
     const DATA_URL  = 'https://hagebau.app.n8n.cloud/webhook/data';
     const AI_BUNDLES_URL = 'https://hagebau.app.n8n.cloud/webhook/ai-bundles';
-    window._comboSort = { category: {col:'orders',dir:'desc'}, product: {col:'orders',dir:'desc'} };
-    window._comboPage = { category: 0, product: 0 };
+// ⭐ Standard-Sortierung: Potential Score (Revenue × Lift)
+window._comboSort = { category: {col:'potential',dir:'desc'}, product: {col:'potential',dir:'desc'} };    window._comboPage = { category: 0, product: 0 };
     window._lastComboData = null;
     window._storedData = null;
 
@@ -272,83 +273,93 @@
     }
 
     function renderComboTable(data, type) {
-      if (!data || data.length === 0) return '<p class="no-data">Keine Kombinationen mit Support ≥0.5% und Lift ≥1.0 gefunden.</p>';
-      const esc = str => String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      const columns = [
-        { key: 'combination', label: type === 'category' ? 'Kategorie-Kombination' : 'Produkt-Kombination', type: 'str' },
-        { key: 'orders', label: 'Best.', type: 'num' },
-        { key: 'revenue', label: 'Revenue', type: 'num' },
-        { key: 'support', label: 'Support', type: 'num' },
-        { key: 'confidence', label: 'Konf.', type: 'num' },
-        { key: 'lift', label: 'Lift', type: 'num' }
-      ];
-      const sortState = window._comboSort[type];
-      let html = '<table><thead><tr>';
-      columns.forEach(col => {
-        const isSorted = sortState.col === col.key;
-        const dir = isSorted ? sortState.dir : '';
-        html += `<th data-col="${col.key}" data-type="${col.type}" class="${isSorted ? 'sort-'+dir : ''}">${esc(col.label)} <span class="sort-icon">${isSorted ? (dir==='asc'?'▲':'▼') : '⇅'}</span></th>`;
-      });
-      html += '</tr></thead><tbody>';
-      const sorted = data.slice().sort((a,b) => {
-        const col = sortState.col;
-        const typ = columns.find(c=>c.key===col).type;
-        let va = a[col], vb = b[col];
-        if (typ==='num') { va = parseFloat(va)||0; vb = parseFloat(vb)||0; }
-        else { va = String(va).toLowerCase(); vb = String(vb).toLowerCase(); }
-        if (va < vb) return sortState.dir==='asc' ? -1 : 1;
-        if (va > vb) return sortState.dir==='asc' ? 1 : -1;
-        return 0;
-      });
-      const page = window._comboPage[type] || 0;
-      const pageSize = 25;
-      const total = sorted.length;
-      const pageCount = Math.ceil(total / pageSize);
-      const paged = sorted.slice(page * pageSize, (page + 1) * pageSize);
-      paged.forEach(row => {
-        const liftVal = parseFloat(row.lift);
-        const liftClass = liftVal >= 1.5 ? 'lift-high' : liftVal >= 1.2 ? 'lift-mid' : 'lift-low';
-        const liftIcon = liftVal > 1 ? '↑' : liftVal < 1 ? '↓' : '→';
-        html += `<tr><td class="combo-cell" title="${esc(row.combination)}">${esc(row.combination)}</td><td>${row.orders}</td><td>${parseFloat(row.revenue).toLocaleString('de-DE',{minimumFractionDigits:2})} €</td><td>${row.support}</td><td>${row.confidence}</td><td class="${liftClass}">${row.lift} ${liftIcon}</td></tr>`;
-      });
-      html += '</tbody></table>';
-      
-      // ✅ VERBESSERTE PAGINIERUNG
-      if (pageCount > 1) {
-        html += '<div class="pager">';
-        
-        // Zeige immer: Erste Seite, Letzte Seite, und Umgebung der aktuellen Seite
-        const maxVisible = 7; // Maximale Anzahl sichtbarer Buttons
-        let startPage = Math.max(0, page - Math.floor(maxVisible / 2));
-        let endPage = Math.min(pageCount - 1, startPage + maxVisible - 1);
-        
-        // Anpassen, wenn wir am Anfang oder Ende sind
-        if (endPage - startPage + 1 < maxVisible) {
-          startPage = Math.max(0, endPage - maxVisible + 1);
-        }
-        
-        // Erste Seite + "..." falls nötig
-        if (startPage > 0) {
-          html += `<button class="pager-btn" data-page="0">1</button>`;
-          if (startPage > 1) html += `<span style="padding:0 8px;">...</span>`;
-        }
-        
-        // Seiten in der Umgebung
-        for (let i = startPage; i <= endPage; i++) {
-          html += `<button class="pager-btn${i===page?' active':''}" data-page="${i}">${i+1}</button>`;
-        }
-        
-        // "..." + Letzte Seite falls nötig
-        if (endPage < pageCount - 1) {
-          if (endPage < pageCount - 2) html += `<span style="padding:0 8px;">...</span>`;
-          html += `<button class="pager-btn" data-page="${pageCount-1}">${pageCount}</button>`;
-        }
-        
-        html += '</div>';
-      }
-      
-      return html;
+  if (!data || data.length === 0) return '<p class="no-data">Keine Kombinationen mit Support ≥0.5% und Lift ≥1.0 gefunden.</p>';
+  const esc = str => String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  
+  // Helper: Revenue parsen
+  const parseRev = (r) => parseFloat(String(r).replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+  
+  const columns = [
+    { key: 'combination', label: type === 'category' ? 'Kategorie-Kombination' : 'Produkt-Kombination', type: 'str' },
+    { key: 'orders', label: 'Best.', type: 'num' },
+    { key: 'revenue', label: 'Revenue', type: 'num' },
+    { key: 'lift', label: 'Lift', type: 'num' },
+    { key: 'potential', label: 'Potential', type: 'num', tooltip: 'Umsatz(€) × Lift' }, // ⭐ NEUE SPALTE
+    { key: 'support', label: 'Support', type: 'num' },
+    { key: 'confidence', label: 'Konf.', type: 'num' }
+  ];
+  
+  const sortState = window._comboSort[type];
+  let html = '<table><thead><tr>';
+  columns.forEach(col => {
+    const isSorted = sortState.col === col.key;
+    const dir = isSorted ? sortState.dir : '';
+    const title = col.tooltip ? ` title="${col.tooltip}"` : '';
+    html += `<th data-col="${col.key}" data-type="${col.type}" class="${isSorted ? 'sort-'+dir : ''}"${title}>${esc(col.label)} <span class="sort-icon">${isSorted ? (dir==='asc'?'▲':'▼') : '⇅'}</span></th>`;
+  });
+  html += '</tr></thead><tbody>';
+  
+  const sorted = data.slice().sort((a,b) => {
+    const col = sortState.col;
+    const typ = columns.find(c=>c.key===col).type;
+    let va = a[col], vb = b[col];
+    
+    // ⭐ Potential Score live berechnen für Sortierung
+    if (col === 'potential') {
+      va = parseRev(a.revenue) * (parseFloat(a.lift)||1);
+      vb = parseRev(b.revenue) * (parseFloat(b.lift)||1);
     }
+    
+    if (typ==='num' && col !== 'potential') { va = parseFloat(va)||0; vb = parseFloat(vb)||0; }
+    else if (col !== 'potential') { va = String(va).toLowerCase(); vb = String(vb).toLowerCase(); }
+    
+    if (va < vb) return sortState.dir==='asc' ? -1 : 1;
+    if (va > vb) return sortState.dir==='asc' ? 1 : -1;
+    return 0;
+  });
+  
+  const page = window._comboPage[type] || 0;
+  const pageSize = 25;
+  const total = sorted.length;
+  const pageCount = Math.ceil(total / pageSize);
+  const paged = sorted.slice(page * pageSize, (page + 1) * pageSize);
+  
+  paged.forEach(row => {
+    const liftVal = parseFloat(row.lift);
+    const liftClass = liftVal >= 1.5 ? 'lift-high' : liftVal >= 1.2 ? 'lift-mid' : 'lift-low';
+    const liftIcon = liftVal > 1 ? '↑' : liftVal < 1 ? '↓' : '→';
+    
+    // ⭐ Potential Score berechnen und anzeigen
+    const potScore = parseRev(row.revenue) * (parseFloat(row.lift)||1);
+    const potFmt = new Intl.NumberFormat('de-DE',{maximumFractionDigits:0}).format(potScore);
+    
+    html += `<tr>
+      <td class="combo-cell" title="${esc(row.combination)}">${esc(row.combination)}</td>
+      <td>${row.orders}</td>
+      <td>${parseFloat(row.revenue).toLocaleString('de-DE',{minimumFractionDigits:2})} €</td>
+      <td>${row.lift}</td>
+      <td><strong style="color:var(--accent)">${potFmt}</strong></td>
+      <td>${row.support}</td>
+      <td>${row.confidence}</td>
+    </tr>`;
+  });
+  
+  html += '</tbody></table>';
+  
+  // Paginierung (bleibt unverändert)
+  if (pageCount > 1) {
+    html += '<div class="pager">';
+    const maxVisible = 7;
+    let startPage = Math.max(0, page - Math.floor(maxVisible / 2));
+    let endPage = Math.min(pageCount - 1, startPage + maxVisible - 1);
+    if (endPage - startPage + 1 < maxVisible) startPage = Math.max(0, endPage - maxVisible + 1);
+    if (startPage > 0) { html += `<button class="pager-btn" data-page="0">1</button>`; if (startPage > 1) html += `<span style="padding:0 8px;">...</span>`; }
+    for (let i = startPage; i <= endPage; i++) html += `<button class="pager-btn${i===page?' active':''}" data-page="${i}">${i+1}</button>`;
+    if (endPage < pageCount - 1) { if (endPage < pageCount - 2) html += `<span style="padding:0 8px;">...</span>`; html += `<button class="pager-btn" data-page="${pageCount-1}">${pageCount}</button>`; }
+    html += '</div>';
+  }
+  return html;
+}
 
     function bindComboSort(type) {
       const outId = type==='category' ? 'category-output' : 'product-output';
@@ -426,84 +437,73 @@
     }
 
     async function generateBundles() {
-      const btn = document.getElementById('bundleBtn');
-      const out = document.getElementById('aiOutputBundles');
-      const explanations = document.getElementById('bundleExplanations'); // ← Neu: Referenz holen
-      
-      if (!window._storedData) { 
-        alert('Bitte zuerst auf "Analysieren" klicken, um Daten zu laden!'); 
-        return; 
-      }
-      
-      btn.disabled = true; 
-      btn.textContent = '⏳ KI arbeitet...'; 
-      out.innerHTML = '<p class="loading">🔄 Generiere Empfehlungen...</p>';
-      if (explanations) explanations.style.display = 'none'; // ← Erklärungen ausblenden beim Start
-      
-      try {
-        // Helper: Revenue parsen für Sortierung
-        const parseRevenue = (rev) => {
-          if (!rev) return 0;
-          const num = String(rev).replace(/[^\d,]/g, '').replace(',', '.');
-          return parseFloat(num) || 0;
-        };
-        
-        // ✅ LÖSUNG 3: Nach Revenue sortieren + orders >= 5 filtern + Top N nehmen
-        const categories = (window._storedData.categories || [])
-          .slice()
-          .sort((a, b) => parseRevenue(b.revenue) - parseRevenue(a.revenue))
-          .filter(item => (item.orders || 0) >= 5)
-          .slice(0, 20);
-        
-        const products = (window._storedData.products || [])
-          .slice()
-          .sort((a, b) => parseRevenue(b.revenue) - parseRevenue(a.revenue))
-          .filter(item => (item.orders || 0) >= 5)
-          .slice(0, 30);
-        
-        // Normalisieren für die KI
-        const normalizeItem = (item) => ({
-          combination: item['combination'] || item['KATEGORIE-KOMBINATION'] || item['KOMBINATION'] || '',
-          orders: parseInt(item['orders'] || item['BEST.'] || item['Best.'] || item['best'] || 0),
-          revenue: item['revenue'] || item['REVENUE'] || item['Revenue'] || '0 €',
-          lift: parseFloat(item['lift'] || item['LIFT'] || item['Lift'] || 0),
-          confidence: parseFloat(item['confidence'] || item['KONF.'] || item['KONF'] || item['Confidence'] || 0),
-          support: parseFloat(item['support'] || item['SUPPORT'] || 0)
-        });
-        
-        const normalizedCategories = categories.map(normalizeItem);
-        const normalizedProducts = products.map(normalizeItem);
-        
-        const res = await fetch(AI_BUNDLES_URL, { 
-          method: 'POST', 
-          headers: { 'Content-Type': 'application/json', 'x-auth': 'session-granted' }, 
-          body: JSON.stringify({ 
-            dateRange: buildDateRange(),
-            categories: normalizedCategories,
-            products: normalizedProducts,
-            rawCategories: categories,
-            rawProducts: products
-          }) 
-        });
-        
-        const data = await res.json();
-        marked.setOptions({ breaks: true, gfm: true });
-        out.innerHTML = marked.parse(data.message || 'Keine Antwort erhalten.');
-        
-        // ← ✅ Erklärungen einblenden, wenn KI-Antwort erfolgreich war
-        if (explanations && data.message && data.message.includes('Abschnitt 1')) {
-          explanations.style.display = 'block';
-        }
-        
-      } catch (e) {
-        console.error('💥 generateBundles error:', e); 
-        out.innerHTML = `<p class="error">❌ Fehler: ${e.message}</p>`;
-        if (explanations) explanations.style.display = 'none';
-      } finally { 
-        btn.disabled = false; 
-        btn.textContent = '🎁 Bundles generieren'; 
-      }
-    }
+  const btn = document.getElementById('bundleBtn');
+  const out = document.getElementById('aiOutputBundles');
+  const explanations = document.getElementById('bundleExplanations');
+  
+  if (!window._storedData) { alert('Bitte zuerst auf "Analysieren" klicken, um Daten zu laden!'); return; }
+  
+  btn.disabled = true; btn.textContent = '⏳ KI arbeitet...'; out.innerHTML = '<p class="loading">🔄 Generiere Empfehlungen...</p>';
+  if (explanations) explanations.style.display = 'none';
+  
+  try {
+    const parseRevenue = (rev) => {
+      if (!rev) return 0;
+      return parseFloat(String(rev).replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+    };
+    
+    // ⭐ Helper: Nach Potential sortieren + filtern
+    const prepData = (arr, limit) => arr.slice()
+      .map(item => ({
+        ...item,
+        potential: parseRevenue(item.revenue) * (parseFloat(item.lift) || 1) // Potential berechnen
+      }))
+      .sort((a,b) => b.potential - a.potential) // ⭐ Nach Potential sortieren
+      .filter(item => (item.orders || 0) >= 5 && (item.lift || 0) >= 1.2) // ⭐ Auch Lift filtern
+      .slice(0, limit);
+    
+    const categories = prepData(window._storedData.categories || [], 20);
+    const products = prepData(window._storedData.products || [], 30);
+    
+    const normalizeItem = (item) => ({
+      combination: item['combination'] || item['KATEGORIE-KOMBINATION'] || item['KOMBINATION'] || '',
+      orders: parseInt(item['orders'] || item['BEST.'] || item['Best.'] || item['best'] || 0),
+      revenue: item['revenue'] || item['REVENUE'] || item['Revenue'] || '0 €',
+      lift: parseFloat(item['lift'] || item['LIFT'] || item['Lift'] || 0),
+      confidence: parseFloat(item['confidence'] || item['KONF.'] || item['KONF'] || item['Confidence'] || 0),
+      support: parseFloat(item['support'] || item['SUPPORT'] || 0),
+      potential: item.potential // ⭐ Potential mitgeben
+    });
+    
+    const normalizedCategories = categories.map(normalizeItem);
+    const normalizedProducts = products.map(normalizeItem);
+    
+    const res = await fetch(AI_BUNDLES_URL, { 
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json', 'x-auth': 'session-granted' }, 
+      body: JSON.stringify({ 
+        dateRange: buildDateRange(),
+        categories: normalizedCategories,
+        products: normalizedProducts,
+        rawCategories: categories,
+        rawProducts: products
+      }) 
+    });
+    
+    const data = await res.json();
+    marked.setOptions({ breaks: true, gfm: true });
+    out.innerHTML = marked.parse(data.message || 'Keine Antwort erhalten.');
+    
+    if (explanations && data.message && data.message.includes('Abschnitt 1')) explanations.style.display = 'block';
+    
+  } catch (e) {
+    console.error('💥 generateBundles error:', e); 
+    out.innerHTML = `<p class="error">❌ Fehler: ${e.message}</p>`;
+    if (explanations) explanations.style.display = 'none';
+  } finally { 
+    btn.disabled = false; btn.textContent = '🎁 Bundles generieren'; 
+  }
+}
         
 
     document.addEventListener('DOMContentLoaded', () => {
