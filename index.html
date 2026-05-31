@@ -398,6 +398,7 @@
     async function generateBundles() {
       const btn = document.getElementById('bundleBtn');
       const out = document.getElementById('aiOutputBundles');
+      const explanations = document.getElementById('bundleExplanations'); // ← Neu: Referenz holen
       
       if (!window._storedData) { 
         alert('Bitte zuerst auf "Analysieren" klicken, um Daten zu laden!'); 
@@ -407,6 +408,7 @@
       btn.disabled = true; 
       btn.textContent = '⏳ KI arbeitet...'; 
       out.innerHTML = '<p class="loading">🔄 Generiere Empfehlungen...</p>';
+      if (explanations) explanations.style.display = 'none'; // ← Erklärungen ausblenden beim Start
       
       try {
         // Helper: Revenue parsen für Sortierung
@@ -418,10 +420,10 @@
         
         // ✅ LÖSUNG 3: Nach Revenue sortieren + orders >= 5 filtern + Top N nehmen
         const categories = (window._storedData.categories || [])
-          .slice() // Kopie erstellen (nicht Original verändern)
-          .sort((a, b) => parseRevenue(b.revenue) - parseRevenue(a.revenue)) // Höchster Revenue zuerst
-          .filter(item => (item.orders || 0) >= 5) // Nur statistisch relevante Kombinationen
-          .slice(0, 20); // Top 20 nehmen
+          .slice()
+          .sort((a, b) => parseRevenue(b.revenue) - parseRevenue(a.revenue))
+          .filter(item => (item.orders || 0) >= 5)
+          .slice(0, 20);
         
         const products = (window._storedData.products || [])
           .slice()
@@ -429,7 +431,7 @@
           .filter(item => (item.orders || 0) >= 5)
           .slice(0, 30);
         
-        // Normalisieren für die KI (unterstützt alle Key-Varianten)
+        // Normalisieren für die KI
         const normalizeItem = (item) => ({
           combination: item['combination'] || item['KATEGORIE-KOMBINATION'] || item['KOMBINATION'] || '',
           orders: parseInt(item['orders'] || item['BEST.'] || item['Best.'] || item['best'] || 0),
@@ -458,9 +460,15 @@
         marked.setOptions({ breaks: true, gfm: true });
         out.innerHTML = marked.parse(data.message || 'Keine Antwort erhalten.');
         
+        // ← ✅ Erklärungen einblenden, wenn KI-Antwort erfolgreich war
+        if (explanations && data.message && data.message.includes('Abschnitt 1')) {
+          explanations.style.display = 'block';
+        }
+        
       } catch (e) {
         console.error('💥 generateBundles error:', e); 
         out.innerHTML = `<p class="error">❌ Fehler: ${e.message}</p>`;
+        if (explanations) explanations.style.display = 'none';
       } finally { 
         btn.disabled = false; 
         btn.textContent = '🎁 Bundles generieren'; 
