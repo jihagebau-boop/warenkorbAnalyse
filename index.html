@@ -470,50 +470,66 @@ window._comboSort = { category: {col:'potential',dir:'desc'}, product: {col:'pot
     }
 
     async function fetchData() {
-      if (sessionStorage.getItem('ga_auth') !== 'true') { logout(); return; }
-      const btn = document.getElementById('fetchBtn');
-      const range = buildDateRange();
-      if (!range) { btn.disabled = false; return; }
-      btn.disabled = true;
-      document.getElementById('summary-output').innerHTML = '<p class="loading">🔄 Analysiere Daten...</p>';
-      document.getElementById('category-output').innerHTML = '';
-      document.getElementById('product-output').innerHTML = '';
-      try {
-        const res = await fetch(DATA_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-auth': 'session-granted' }, body: JSON.stringify({ dateRange: range }) });
-        if (res.status === 401) { logout(); return; }
-        if (!res.ok) throw new Error(`Server-Antwort: ${res.status} ${res.statusText}`);
-        const responseText = await res.text();
-        if (!responseText || responseText.trim() === '') throw new Error('⚠️ Webhook hat leere Antwort zurückgegeben.');
-        let rawResult = JSON.parse(responseText);
-        let data = null;
-        if (rawResult && typeof rawResult === 'object') {
-          if (rawResult.part1_key_metrics) data = rawResult;
-          else if (Array.isArray(rawResult) && rawResult.length > 0) {
-            const firstItem = rawResult[0];
-            if (firstItem?.json?.part1_key_metrics) data = firstItem.json;
-            else if (firstItem?.part1_key_metrics) data = firstItem;
-          }
-        }
-        if (!data || !data.part1_key_metrics) throw new Error('Datenstruktur ungültig – erwartet: part1_key_metrics');
-
-        document.getElementById('summary-output').innerHTML = renderSummary(data.part1_key_metrics);
-        window._lastComboData = { category: data.part2_category_combinations || [], product: data.part2_product_combinations || [] };
-        window._storedData = { metrics: data.part1_key_metrics, categories: data.part2_category_combinations || [], products: data.part2_product_combinations || [] };
-
-        if (data.part2_category_combinations?.length > 0) {
-          document.getElementById('category-output').innerHTML = renderComboTable(data.part2_category_combinations, 'category');
-          bindComboSort('category'); bindComboPager('category', Math.ceil(data.part2_category_combinations.length / 25));
-        } else document.getElementById('category-output').innerHTML = '<p class="no-data">Keine Kategorie-Kombinationen gefunden.</p>';
-        
-        if (data.part2_product_combinations?.length > 0) {
-          document.getElementById('product-output').innerHTML = renderComboTable(data.part2_product_combinations, 'product');
-          bindComboSort('product'); bindComboPager('product', Math.ceil(data.part2_product_combinations.length / 25));
-        } else document.getElementById('product-output').innerHTML = '<p class="no-data">Keine Produkt-Kombinationen gefunden.</p>';
-      } catch (e) {
-        console.error('💥 fetchData error:', e);
-        document.getElementById('summary-output').innerHTML = `<p class="error"><strong>❌ Fehler:</strong><br>${e.message}</p>`;
-      } finally { btn.disabled = false; }
+  if (sessionStorage.getItem('ga_auth') !== 'true') { logout(); return; }
+  const btn = document.getElementById('fetchBtn');
+  const range = buildDateRange();
+  if (!range) { btn.disabled = false; return; }
+  
+  btn.disabled = true;
+  
+  // ✅ NEU: KI-Bereich zurücksetzen beim Start einer neuen Analyse
+  const aiOutput = document.getElementById('aiOutputBundles');
+  const explanations = document.getElementById('bundleExplanations');
+  if (aiOutput) {
+    aiOutput.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:20px;">Klicke oben auf "Bundles generieren", um KI-basierte Empfehlungen zu erhalten.</p>';
+  }
+  if (explanations) {
+    explanations.style.display = 'none';
+  }
+  
+  document.getElementById('summary-output').innerHTML = '<p class="loading">🔄 Analysiere Daten...</p>';
+  document.getElementById('category-output').innerHTML = '';
+  document.getElementById('product-output').innerHTML = '';
+  
+  try {
+    const res = await fetch(DATA_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-auth': 'session-granted' }, body: JSON.stringify({ dateRange: range }) });
+    if (res.status === 401) { logout(); return; }
+    if (!res.ok) throw new Error(`Server-Antwort: ${res.status} ${res.statusText}`);
+    const responseText = await res.text();
+    if (!responseText || responseText.trim() === '') throw new Error('⚠️ Webhook hat leere Antwort zurückgegeben.');
+    let rawResult = JSON.parse(responseText);
+    let data = null;
+    if (rawResult && typeof rawResult === 'object') {
+      if (rawResult.part1_key_metrics) data = rawResult;
+      else if (Array.isArray(rawResult) && rawResult.length > 0) {
+        const firstItem = rawResult[0];
+        if (firstItem?.json?.part1_key_metrics) data = firstItem.json;
+        else if (firstItem?.part1_key_metrics) data = firstItem;
+      }
     }
+    if (!data || !data.part1_key_metrics) throw new Error('Datenstruktur ungültig – erwartet: part1_key_metrics');
+
+    document.getElementById('summary-output').innerHTML = renderSummary(data.part1_key_metrics);
+    window._lastComboData = { category: data.part2_category_combinations || [], product: data.part2_product_combinations || [] };
+    window._storedData = { metrics: data.part1_key_metrics, categories: data.part2_category_combinations || [], products: data.part2_product_combinations || [] };
+
+    if (data.part2_category_combinations?.length > 0) {
+      document.getElementById('category-output').innerHTML = renderComboTable(data.part2_category_combinations, 'category');
+      bindComboSort('category'); bindComboPager('category', Math.ceil(data.part2_category_combinations.length / 25));
+    } else document.getElementById('category-output').innerHTML = '<p class="no-data">Keine Kategorie-Kombinationen gefunden.</p>';
+    
+    if (data.part2_product_combinations?.length > 0) {
+      document.getElementById('product-output').innerHTML = renderComboTable(data.part2_product_combinations, 'product');
+      bindComboSort('product'); bindComboPager('product', Math.ceil(data.part2_product_combinations.length / 25));
+    } else document.getElementById('product-output').innerHTML = '<p class="no-data">Keine Produkt-Kombinationen gefunden.</p>';
+    
+  } catch (e) {
+    console.error('💥 fetchData error:', e);
+    document.getElementById('summary-output').innerHTML = `<p class="error"><strong>❌ Fehler:</strong><br>${e.message}</p>`;
+  } finally { 
+    btn.disabled = false; 
+  }
+}
 
     async function generateBundles() {
   const btn = document.getElementById('bundleBtn');
