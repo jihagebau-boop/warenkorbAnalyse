@@ -98,7 +98,16 @@
       <li><strong>Sortierung:</strong> Nach <strong>Potential Score</strong> (Umsatz × Lift) – wirtschaftlich + statistisch relevanteste zuerst</li>
       <li><strong>Formel:</strong> <code style="background:#fff;padding:2px 6px;border-radius:3px;">Potential = Revenue(€) × Lift</code><br>
           <small>Beispiel: 47.002€ × 14,16 = 665.562 Potential → Höchste Priorität</small></li>
-      <li><strong>Kontext-Logik:</strong> Der Umsetzungshinweis passt sich automatisch an Confidence, Orders und Lift an</li>
+            <li><strong>Kontext-Logik:</strong> Der Umsetzungshinweis passt sich automatisch an Confidence, Orders und Lift an</li>
+      <li style="margin-top:8px; padding-top:8px; border-top:1px solid var(--surface-border);">
+        <strong>📖 Was bedeuten die Umsetzungshinweise?</strong>
+        <ul style="margin-top:6px; padding-left:16px; font-size:0.85rem; line-height:1.5; color:var(--text-muted);">
+          <li><em>"Sofort als Standard-Bundle mit Rabatt umsetzen"</em><br>→ Lift >10, Confidence ≥30%, Orders ≥15 (statistisch sicher + starker Zusammenhang)</li>
+          <li><em>"Als Cross-Selling im Checkout testen"</em><br>→ Guter Lift & Confidence, aber noch begrenzte Orders (erst validieren, dann skalieren)</li>
+          <li><em>"Nur als Pilot/Test-Kampagne starten"</em><br>→ Sehr hoher Lift, aber <10 Orders (Nischen-Chance mit statistischer Unsicherheit)</li>
+          <li><em>"Als 'Kunden kauften auch' empfehlen"</em><br>→ Lift <3 (schwacher Zusammenhang → kein festes Bundle, nur dynamische Empfehlung)</li>
+        </ul>
+      </li>
     </ul>
   </div>
 
