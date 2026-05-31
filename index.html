@@ -85,7 +85,6 @@
   </p>
 </div>
 
-<!-- Erklärungen (werden nach dem Generieren sichtbar) -->
 <div id="bundleExplanations" style="display:none; margin-top:24px; font-size:0.9rem; color:var(--text-muted);">
   
   <!-- Erklärung Abschnitt 1 -->
@@ -101,48 +100,69 @@
     </ul>
   </div>
 
-  <!-- Erklärung Abschnitt 2 -->
+  <!-- Erklärung Abschnitt 2 (ERWEITERT) -->
   <div class="card" style="background:var(--surface-soft); border-left:4px solid var(--warning); margin-top:16px;">
     <h4 style="margin:0 0 12px 0; color:var(--text-main);">🎯 Was bedeuten die Aktionstypen?</h4>
     <p style="margin:0 0 8px 0;"><strong>Abschnitt 2: Aktionsideen</strong></p>
+    
+    <!-- Grid für die 5 Typen -->
     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:12px; margin-top:8px;">
-      <div style="background:#fff; padding:12px; border-radius:6px;">
+      <div style="background:#fff; padding:12px; border-radius:6px; box-shadow:var(--shadow-sm);">
         <strong>📌 Empfehlung</strong><br>
-        <small>Produktdetailseite ("Kunden kauften auch...")</small>
+        <small>Produktdetailseite ("Kunden kauften auch...")<br>→ Kontextuell, unaufdringlich, hohe Conversion</small>
       </div>
-      <div style="background:#fff; padding:12px; border-radius:6px;">
+      <div style="background:#fff; padding:12px; border-radius:6px; box-shadow:var(--shadow-sm);">
         <strong>📰 Banner</strong><br>
-        <small>Kategorieseite (große Werbefläche)</small>
+        <small>Kategorieseite (große Werbefläche)<br>→ Sichtbarkeit für viele Nutzer, Branding-Effekt</small>
       </div>
-      <div style="background:#fff; padding:12px; border-radius:6px;">
+      <div style="background:#fff; padding:12px; border-radius:6px; box-shadow:var(--shadow-sm);">
         <strong>📧 Email</strong><br>
-        <small>Newsletter / Follow-Up Kampagne</small>
+        <small>Newsletter / Follow-Up Kampagne<br>→ Personalisiert, zeitversetzt, gute Open-Rates</small>
       </div>
-      <div style="background:#fff; padding:12px; border-radius:6px;">
+      <div style="background:#fff; padding:12px; border-radius:6px; box-shadow:var(--shadow-sm);">
         <strong>🛒 Checkout</strong><br>
-        <small>Warenkorb / Kasse (Cross-Selling)</small>
+        <small>Warenkorb / Kasse (Cross-Selling)<br>→ Hohe Kauf-Intent → Upsell funktioniert am besten</small>
       </div>
-      <div style="background:#fff; padding:12px; border-radius:6px;">
+      <div style="background:#fff; padding:12px; border-radius:6px; box-shadow:var(--shadow-sm);">
         <strong>📱 Push</strong><br>
-        <small>Browser-Push / App-Benachrichtigung</small>
+        <small>Browser-Push / App-Benachrichtigung<br>→ Reaktivierung, direkter Kanal, hohe Aufmerksamkeit</small>
       </div>
     </div>
-  </div>
-
-  <!-- Erklärung Abschnitt 3 -->
-  <div class="card" style="background:var(--surface-soft); border-left:4px solid var(--success); margin-top:16px;">
-    <h4 style="margin:0 0 12px 0; color:var(--text-main);">🏆 Wie wird priorisiert?</h4>
-    <p style="margin:0 0 8px 0;"><strong>Abschnitt 3: Priorität</strong></p>
-    <ul style="margin:0; padding-left:20px; line-height:1.6;">
-      <li><strong>Berechnung:</strong> Umsatz × Lift = Gesamtpotenzial</li>
-      <li><strong>Top 3:</strong> Die wirtschaftlich vielversprechendsten Bundles für sofortige Umsetzung</li>
-      <li><strong>Bundle 1</strong> (Sichtschutz + Zubehör): 47.002€ Umsatz + 14.16 Lift = Höchste Priorität</li>
-      <li><strong>Empfehlung:</strong> Mit diesen 3 Bundles sofort starten für maximalen ROI</li>
-    </ul>
-  </div>
-
-</div>
-          </div>
+    
+    <!-- Entscheidungshilfe-Tabelle -->
+    <div style="margin-top:16px; overflow-x:auto;">
+      <p style="margin:0 0 8px 0; font-weight:600; color:var(--text-main);">🧭 Wann welchen Typ wählen?</p>
+      <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+        <thead>
+          <tr style="background:#f5f5f5;">
+            <th style="padding:8px; text-align:left; border:1px solid #eee;">Situation</th>
+            <th style="padding:8px; text-align:left; border:1px solid #eee;">Empfohlener Typ</th>
+            <th style="padding:8px; text-align:left; border:1px solid #eee;">Warum?</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding:8px; border:1px solid #eee;">Kunde browsed gerade</td>
+            <td style="padding:8px; border:1px solid #eee;">📌 Empfehlung</td>
+            <td style="padding:8px; border:1px solid #eee;">Kontextuell, unaufdringlich</td>
+          </tr>
+          <tr>
+            <td style="padding:8px; border:1px solid #eee;">Kategorie hat viel Traffic</td>
+            <td style="padding:8px; border:1px solid #eee;">📰 Banner</td>
+            <td style="padding:8px; border:1px solid #eee;">Sichtbarkeit, Branding</td>
+          </tr>
+          <tr>
+            <td style="padding:8px; border:1px solid #eee;">Kunde hat gekauft / angesehen</td>
+            <td style="padding:8px; border:1px solid #eee;">📧 Email</td>
+            <td style="padding:8px; border:1px solid #eee;">Personalisiert, gute Open-Rates</td>
+          </tr>
+          <tr>
+            <td style="padding:8px; border:1px solid #eee;">Kunde ist im Kaufprozess</td>
+            <td style="padding:8px; border:1px solid #eee;">🛒 Checkout</td>
+            <td style="padding:8px; border:1px solid #eee;">Hohe Intent → bester Upsell</td>
+          </tr>
+          <tr>
+            <td style="padding
 
           <div class="grid-two" style="margin-top: 24px;">
             <div class="card">
