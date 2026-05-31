@@ -312,11 +312,41 @@
         html += `<tr><td class="combo-cell" title="${esc(row.combination)}">${esc(row.combination)}</td><td>${row.orders}</td><td>${parseFloat(row.revenue).toLocaleString('de-DE',{minimumFractionDigits:2})} €</td><td>${row.support}</td><td>${row.confidence}</td><td class="${liftClass}">${row.lift} ${liftIcon}</td></tr>`;
       });
       html += '</tbody></table>';
+      
+      // ✅ VERBESSERTE PAGINIERUNG
       if (pageCount > 1) {
         html += '<div class="pager">';
-        for (let i = 0; i < pageCount; ++i) html += `<button class="pager-btn${i===page?' active':''}" data-page="${i}">${i+1}</button>`;
+        
+        // Zeige immer: Erste Seite, Letzte Seite, und Umgebung der aktuellen Seite
+        const maxVisible = 7; // Maximale Anzahl sichtbarer Buttons
+        let startPage = Math.max(0, page - Math.floor(maxVisible / 2));
+        let endPage = Math.min(pageCount - 1, startPage + maxVisible - 1);
+        
+        // Anpassen, wenn wir am Anfang oder Ende sind
+        if (endPage - startPage + 1 < maxVisible) {
+          startPage = Math.max(0, endPage - maxVisible + 1);
+        }
+        
+        // Erste Seite + "..." falls nötig
+        if (startPage > 0) {
+          html += `<button class="pager-btn" data-page="0">1</button>`;
+          if (startPage > 1) html += `<span style="padding:0 8px;">...</span>`;
+        }
+        
+        // Seiten in der Umgebung
+        for (let i = startPage; i <= endPage; i++) {
+          html += `<button class="pager-btn${i===page?' active':''}" data-page="${i}">${i+1}</button>`;
+        }
+        
+        // "..." + Letzte Seite falls nötig
+        if (endPage < pageCount - 1) {
+          if (endPage < pageCount - 2) html += `<span style="padding:0 8px;">...</span>`;
+          html += `<button class="pager-btn" data-page="${pageCount-1}">${pageCount}</button>`;
+        }
+        
         html += '</div>';
       }
+      
       return html;
     }
 
